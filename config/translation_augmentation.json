@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "input": "data/splits/train.csv",
+  "existing_vietnamese_input": "data/processed/Vietnamese_Translated_Master.csv",
+  "output": "data/processed/Vietnamese_Translated_Augmentation.csv",
+  "review_sample_output": "reports/v2/translated_augmentation_review_sample.csv",
+  "report": "reports/v2/translated_augmentation_report.md",
+  "seed": 42,
+  "target_per_class": 500,
+  "review_sample_per_class": 30,
+  "allowed_parent_labels": ["normal", "spam", "phishing"],
+  "allowed_parent_provenance": {
+    "normal": ["verified_legitimate_source"],
+    "spam": ["high_confidence_curated_spam"],
+    "phishing": ["nazario_phishing"]
+  },
+  "required_parent_split": "train",
+  "one_parent_per_group": true,
+  "exclude_existing_translated_parents": true,
+  "sampling_strategy": "deterministic_source_round_robin",
+  "model": {
+    "name": "Helsinki-NLP/opus-mt-en-vi",
+    "revision": "989c9fb9ec63987901022baf0182dcec3e149be6",
+    "license": "Apache-2.0",
+    "source_language": "eng",
+    "target_language": "vie",
+    "target_prefix": ">>vie<<",
+    "protected_token_strategy": "translate_segments_between_stable_placeholders",
+    "max_input_tokens": 400,
+    "batch_size": 24,
+    "generation": {
+      "num_beams": 1,
+      "do_sample": false,
+      "early_stopping": false,
+      "max_new_tokens": 480,
+      "use_cache": true
+    }
+  },
+  "quality": {
+    "minimum_length_ratio": 0.35,
+    "maximum_length_ratio": 2.8,
+    "untranslated_english_min_hits": 12,
+    "untranslated_english_dominance": 2.0,
+    "critical_flags": [
+      "empty_output",
+      "broken_unicode",
+      "broken_urls",
+      "lost_email_addresses",
+      "lost_domains",
+      "lost_protected_values",
+      "untranslated_english_body",
+      "translation_too_short",
+      "translation_excessively_long",
+      "duplicate_translated_output",
+      "translation_error"
+    ]
+  },
+  "output_metadata": {
+    "language": "vi",
+    "data_origin": "translated",
+    "augmentation_type": "controlled_translation"
+  }
+}

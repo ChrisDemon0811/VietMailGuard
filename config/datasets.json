@@ -1,0 +1,698 @@
+{
+  "schema_version": 2,
+  "policy": {
+    "allowed_internal_labels": [
+      "normal",
+      "spam",
+      "phishing"
+    ],
+    "unmapped_label_action": "preserve_for_review_and_exclude_from_training",
+    "mapping_rule": "A raw label may be mapped only after its semantics and corpus provenance are verified.",
+    "raw_label_statuses": [
+      "normal",
+      "spam",
+      "phishing",
+      "review",
+      "exclude"
+    ],
+    "training_eligible_statuses": [
+      "normal",
+      "spam",
+      "phishing"
+    ],
+    "review_values_are_not_training_labels": [
+      "review",
+      "exclude"
+    ],
+    "raw_label_policy_is_authoritative": true,
+    "review_rows_are_training_eligible": false,
+    "rule_assisted_proposals_are_ground_truth": false,
+    "manual_confirmation_required_for_rule_assisted_proposals": true,
+    "semantics_report": "reports/label_semantics_report.md",
+    "review_rules": "config/label_review_rules.json",
+    "high_confidence_report": "reports/high_confidence_label_report.md",
+    "high_confidence_inventory": "reports/high_confidence_label_inventory.csv",
+    "baseline_v1": {
+      "normal_sources": [
+        "CEAS_08.csv:0",
+        "Enron.csv:0",
+        "Ling.csv:0",
+        "SpamAssasin.csv:0"
+      ],
+      "phishing_sources": [
+        "Nazario.csv:1"
+      ],
+      "spam_requires_manual_confirmation_from": [
+        "Ling.csv:1",
+        "SpamAssasin.csv:1"
+      ],
+      "do_not_use_uncurated": [
+        "CEAS_08.csv:1",
+        "Enron.csv:1"
+      ],
+      "keep_separate_pending_taxonomy": [
+        "Nigerian_Fraud.csv:1"
+      ]
+    },
+    "spam_curation": {
+      "source_priority": [
+        "SpamAssasin.csv:1",
+        "Ling.csv:1",
+        "Enron.csv:1",
+        "CEAS_08.csv:1"
+      ],
+      "never_use_for_spam": [
+        "Nigerian_Fraud.csv:1"
+      ],
+      "candidate_input_group": "likely_spam",
+      "minimum_distinct_spam_rules": 2,
+      "maximum_phishing_or_scam_rules": 0,
+      "minimum_body_characters": 120,
+      "minimum_body_words": 20,
+      "require_unique_exact_content": true,
+      "require_unique_template_content": true,
+      "rule_candidates_are_ground_truth": false,
+      "human_confirmation_required": true,
+      "desired_confirmed_spam": 1000,
+      "desired_initial_cap": 1500,
+      "candidate_report": "reports/spam_curation_candidates.csv",
+      "manual_labels": "data/curated/spam_manual_labels.csv",
+      "curation_report": "reports/spam_curation_report.md"
+    },
+    "baseline_freeze_v1": {
+      "status": "ready_for_standardization_human_validation_required_before_training",
+      "random_seed": 42,
+      "target_per_class": 1250,
+      "desired_cap": 1500,
+      "spam_terminology": "high_confidence_curated_spam",
+      "spam_is_manually_confirmed": false,
+      "human_validation_required_before_training": true,
+      "validation_sample": {
+        "SpamAssassin": 35,
+        "Ling": 15,
+        "Enron": 80,
+        "CEAS_08": 20
+      },
+      "normal_sampling_plan": {
+        "CEAS_08": 350,
+        "Enron": 350,
+        "Ling": 250,
+        "SpamAssassin": 300
+      },
+      "spam_sampling_plan": {
+        "SpamAssassin": 351,
+        "Ling": 66,
+        "Enron": 733,
+        "CEAS_08": 100
+      },
+      "phishing_sampling_plan": {
+        "Nazario": 1250
+      },
+      "exclude_exact_duplicates": true,
+      "exclude_template_duplicates": true,
+      "eligibility_dataset": "data/processed/baseline_eligibility.csv",
+      "sampling_manifest": "reports/baseline_sampling_manifest.csv",
+      "validation_report": "reports/spam_validation_sample.csv",
+      "outstanding_review_report": "reports/spam_curation_needs_human_review.csv",
+      "plan_report": "reports/baseline_dataset_plan.md"
+    },
+    "standardization": {
+      "output": "data/processed/English_Master_Dataset.csv",
+      "removed_rows_report": "reports/removed_rows.csv",
+      "duplicate_report": "reports/duplicate_report.csv",
+      "review_rows_report": "reports/standardization_review_rows.csv",
+      "summary_report": "reports/standardization_summary.csv",
+      "unicode_form": "NFC",
+      "placeholder_values": [
+        "empty",
+        "none",
+        "null",
+        "nan",
+        "n/a",
+        "na"
+      ],
+      "body_is_required": true,
+      "container_artifact_patterns": [
+        "this text is part of the internal format of your mail folder, and is not a real message"
+      ],
+      "exact_duplicate_action": "keep_first_canonical_and_report_removed_copies",
+      "template_duplicate_action": "keep_distinct_rows_grouped_by_group_id",
+      "conflicting_template_label_action": "exclude_entire_group_and_report",
+      "row_level_spam_override": {
+        "source_report": "reports/spam_curation_candidates.csv",
+        "candidate_group": "high_confidence_curated_spam",
+        "required_proposed_label": "spam",
+        "mapped_label": "spam",
+        "label_provenance": "high_confidence_curated_spam",
+        "manual_confirmation_claimed": false
+      },
+      "output_schema": [
+        "id",
+        "original_row_id",
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "label",
+        "raw_label",
+        "source",
+        "language",
+        "url_count",
+        "content_hash",
+        "group_id",
+        "label_provenance"
+      ]
+    },
+    "vietnamese_standardization": {
+      "input": "data/raw/data_vi.csv",
+      "output": "data/processed/Vietnamese_Translated_Master.csv",
+      "report": "reports/v2/vietnamese_standardization_report.md",
+      "removed_rows_report": "reports/v2/vietnamese_removed_rows.csv",
+      "duplicate_report": "reports/v2/vietnamese_duplicate_report.csv",
+      "unicode_form": "NFC",
+      "placeholder_values": [
+        "empty",
+        "none",
+        "null",
+        "nan",
+        "n/a",
+        "na"
+      ],
+      "subject_prefixes": [
+        "Chủ đề",
+        "Tiêu đề",
+        "Chủ thể"
+      ],
+      "exact_duplicate_action": "keep_first_canonical_and_report_removed_copies",
+      "template_duplicate_action": "keep_distinct_rows_grouped_by_group_id",
+      "conflicting_template_label_action": "exclude_entire_group_and_report",
+      "dataset": {
+        "path": "data/raw/data_vi.csv",
+        "format": "csv",
+        "encoding": "utf-8",
+        "source_name": "data_vi",
+        "language": "vi",
+        "data_origin": "translated",
+        "observed_columns": [
+          "spam",
+          "text"
+        ],
+        "field_mapping": {
+          "raw_label": "spam",
+          "text": "text"
+        },
+        "raw_label_policy": {
+          "0": {
+            "status": "normal",
+            "label_status": "eligible",
+            "training_eligible": true,
+            "label_provenance": "translated_dataset_verified_normal"
+          },
+          "1": {
+            "status": "review",
+            "label_status": "review",
+            "training_eligible": false,
+            "label_provenance": "translated_dataset_mixed_positive"
+          }
+        }
+      },
+      "output_schema": [
+        "id",
+        "original_row_id",
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "original_text",
+        "normalized_text",
+        "label",
+        "raw_label",
+        "label_status",
+        "label_provenance",
+        "training_eligible",
+        "source",
+        "language",
+        "data_origin",
+        "parent_id",
+        "translation_source_id",
+        "url_count",
+        "extracted_urls",
+        "malformed_url_count",
+        "malformed_urls",
+        "raw_content_hash",
+        "content_hash",
+        "group_id"
+      ]
+    },
+    "cross_language_overlap": {
+      "english_input": "data/processed/English_Master_Dataset.csv",
+      "vietnamese_input": "data/processed/Vietnamese_Translated_Master.csv",
+      "output": "reports/v2/cross_language_overlap.csv",
+      "report": "reports/v2/cross_language_leakage_report.md",
+      "rare_token_max_english_df": 30,
+      "rare_token_max_vietnamese_df": 20,
+      "number_max_english_df": 20,
+      "url_max_english_df": 30,
+      "email_max_english_df": 50,
+      "minimum_candidate_points": 4.5,
+      "medium_confidence_points": 7.0,
+      "high_confidence_points": 12.0,
+      "high_confidence_min_margin": 3.5,
+      "maximum_candidates_per_vietnamese_row": 3,
+      "populate_high_confidence_parent_links": true,
+      "future_split_group_column": "cross_language_group_id",
+      "unresolved_candidate_action": "review_before_split_or_exclude_from_vietnamese_test",
+      "semantic_model": null,
+      "semantic_similarity_is_ground_truth": false
+    },
+    "vietnamese_label_curation": {
+      "vietnamese_input": "data/processed/Vietnamese_Translated_Master.csv",
+      "english_input": "data/processed/English_Master_Dataset.csv",
+      "overlap_input": "reports/v2/cross_language_overlap.csv",
+      "rules": "config/vietnamese_label_rules.json",
+      "review_output": "data/curated/v2/vietnamese_positive_review.csv",
+      "curated_output": "data/curated/v2/Vietnamese_Curated_Dataset.csv",
+      "report": "reports/v2/vietnamese_label_curation_report.md",
+      "preserve_existing_human_decisions": true,
+      "rule_proposals_are_ground_truth": false,
+      "unresolved_rows_are_training_eligible": false,
+      "translated_labels_are_native_ground_truth": false
+    },
+    "translated_augmentation": {
+      "config": "config/translation_augmentation.json",
+      "training_use": "allowed_after_quality_checks_and_group_safe_split",
+      "evaluation_use": "not_a_native_vietnamese_benchmark",
+      "online_translation_api_required": false,
+      "parent_and_translation_must_share_split": true
+    },
+    "splitting": {
+      "input": "data/processed/English_Master_Dataset.csv",
+      "seed": 42,
+      "ratios": {
+        "train": 0.7,
+        "validation": 0.15,
+        "test": 0.15
+      },
+      "group_column": "group_id",
+      "stratify_column": "label",
+      "outputs": {
+        "train": "data/splits/train.csv",
+        "validation": "data/splits/validation.csv",
+        "test": "data/splits/test.csv"
+      },
+      "report": "reports/split_report.json",
+      "leakage_checks": [
+        "group_id",
+        "content_hash",
+        "normalized_content_hash",
+        "template_hash"
+      ]
+    }
+  },
+  "datasets": {
+    "CEAS_08.csv": {
+      "path": "data/raw/CEAS_08.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "CEAS_08",
+      "language": "en",
+      "observed_columns": [
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "label",
+        "urls"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": "sender",
+        "receiver": "receiver",
+        "date": "date",
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "0": {
+          "status": "normal",
+          "training_eligible": true,
+          "basis": "verified_corpus_ham_semantics",
+          "label_provenance": "verified_legitimate_source"
+        },
+        "1": {
+          "status": "review",
+          "training_eligible": false,
+          "basis": "mixed_spam_phishing_scam_and_boundary_noise",
+          "review_pool": "reports/review_ceas_positive.csv",
+          "rule_assisted_spam_proposal_enabled": false
+        }
+      },
+      "label_mapping": {
+        "0": "normal"
+      },
+      "label_semantics": {
+        "0": {
+          "proposed_class": "normal",
+          "confidence": "high"
+        },
+        "1": {
+          "proposed_class": "review",
+          "confidence": "high"
+        }
+      },
+      "mapping_status": "partially_verified",
+      "training_status": "exclude_unmapped_raw_labels",
+      "notes": [
+        "Raw label 0 is CEAS ham/legitimate mail and may map to normal.",
+        "Raw label 1 originates from a spam-filter corpus and contains commercial spam plus phishing/scam and boundary-noise examples; keep it under review.",
+        "Only keys present in label_mapping are approved for automatic standardization."
+      ]
+    },
+    "Enron.csv": {
+      "path": "data/raw/Enron.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "Enron",
+      "language": "en",
+      "observed_columns": [
+        "subject",
+        "body",
+        "label"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": null,
+        "receiver": null,
+        "date": null,
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "0": {
+          "status": "normal",
+          "training_eligible": true,
+          "basis": "verified_enron_legitimate_mail",
+          "label_provenance": "verified_legitimate_source"
+        },
+        "1": {
+          "status": "review",
+          "training_eligible": false,
+          "basis": "mixed_bulk_spam_credential_phishing_and_financial_fraud",
+          "review_pool": "reports/review_enron_positive.csv",
+          "rule_assisted_spam_proposal_enabled": false
+        }
+      },
+      "label_mapping": {
+        "0": "normal"
+      },
+      "label_semantics": {
+        "0": {
+          "proposed_class": "normal",
+          "confidence": "high"
+        },
+        "1": {
+          "proposed_class": "review",
+          "confidence": "high"
+        }
+      },
+      "mapping_status": "partially_verified",
+      "training_status": "exclude_unmapped_raw_labels",
+      "notes": [
+        "Raw label 0 is legitimate Enron mail and may map to normal.",
+        "Raw label 1 is the Enron-Spam positive class but local samples contain bulk spam, credential phishing, lottery, and advance-fee fraud; keep it under review.",
+        "Only keys present in label_mapping are approved for automatic standardization."
+      ]
+    },
+    "Ling.csv": {
+      "path": "data/raw/Ling.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "Ling",
+      "language": "en",
+      "observed_columns": [
+        "subject",
+        "body",
+        "label"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": null,
+        "receiver": null,
+        "date": null,
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "0": {
+          "status": "normal",
+          "training_eligible": true,
+          "basis": "verified_ling_spam_legitimate_mail",
+          "label_provenance": "verified_legitimate_source"
+        },
+        "1": {
+          "status": "review",
+          "training_eligible": false,
+          "basis": "predominantly_spam_but_contains_scam_or_fraud",
+          "review_pool": "reports/review_ling_positive.csv",
+          "rule_assisted_spam_proposal_enabled": true
+        }
+      },
+      "label_mapping": {
+        "0": "normal"
+      },
+      "label_semantics": {
+        "0": {
+          "proposed_class": "normal",
+          "confidence": "high"
+        },
+        "1": {
+          "proposed_class": "review",
+          "confidence": "medium"
+        }
+      },
+      "mapping_status": "partially_verified",
+      "training_status": "exclude_unmapped_raw_labels",
+      "notes": [
+        "Raw label 0 is Ling-Spam legitimate mail and may map to normal.",
+        "Raw label 1 is predominantly unsolicited commercial spam, with scam/fraud examples that cannot be separated reliably from the raw label alone.",
+        "Only keys present in label_mapping are approved for automatic standardization."
+      ]
+    },
+    "Nazario.csv": {
+      "path": "data/raw/Nazario.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "Nazario",
+      "language": "en",
+      "observed_columns": [
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "urls",
+        "label"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": "sender",
+        "receiver": "receiver",
+        "date": "date",
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "1": {
+          "status": "phishing",
+          "training_eligible": true,
+          "basis": "verified_hand_classified_nazario_phishing_corpus",
+          "label_provenance": "nazario_phishing"
+        }
+      },
+      "label_mapping": {
+        "1": "phishing"
+      },
+      "label_semantics": {
+        "1": {
+          "proposed_class": "phishing",
+          "confidence": "high"
+        }
+      },
+      "mapping_status": "verified_with_row_quality_review",
+      "training_status": "eligible_after_cleaning_and_duplicate_grouping",
+      "notes": [
+        "The Nazario corpus is a hand-classified phishing collection dominated by credential/account, brand-impersonation, payment, and delivery lures.",
+        "Individual malformed, empty-body, non-English, or container-artifact rows still require normal cleaning and review."
+      ]
+    },
+    "Nigerian_Fraud.csv": {
+      "path": "data/raw/Nigerian_Fraud.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "Nigerian_Fraud",
+      "language": "en",
+      "observed_columns": [
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "urls",
+        "label"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": "sender",
+        "receiver": "receiver",
+        "date": "date",
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "1": {
+          "status": "review",
+          "training_eligible": false,
+          "basis": "verified_419_advance_fee_fraud_but_project_taxonomy_not_expanded",
+          "review_pool": "reports/review_nigerian_fraud.csv",
+          "rule_assisted_spam_proposal_enabled": false
+        }
+      },
+      "label_mapping": {},
+      "label_semantics": {
+        "1": {
+          "proposed_class": "review",
+          "confidence": "high"
+        }
+      },
+      "mapping_status": "semantics_verified_policy_decision_required",
+      "training_status": "review",
+      "notes": [
+        "Raw label 1 is dominated by Nigerian/419 advance-fee, inheritance, dormant-fund, lottery, and business-proposal fraud.",
+        "It may map to phishing only if VietMailGuard explicitly adopts a broad social-engineering definition; it is not a pure credential-phishing corpus.",
+        "The local 3,332-row file includes one whitespace-only body row; see reports/label_semantics_report.md."
+      ]
+    },
+    "SpamAssasin.csv": {
+      "path": "data/raw/SpamAssasin.csv",
+      "format": "csv",
+      "encoding": "utf-8-sig",
+      "source_name": "SpamAssassin",
+      "language": "en",
+      "observed_columns": [
+        "sender",
+        "receiver",
+        "date",
+        "subject",
+        "body",
+        "label",
+        "urls"
+      ],
+      "field_mapping": {
+        "id": null,
+        "sender": "sender",
+        "receiver": "receiver",
+        "date": "date",
+        "subject": "subject",
+        "body": "body",
+        "raw_label": "label",
+        "label": null,
+        "source": null,
+        "language": null,
+        "url_count": null,
+        "content_hash": null,
+        "group_id": null
+      },
+      "label_columns_detected": [
+        "label"
+      ],
+      "raw_label_policy": {
+        "0": {
+          "status": "normal",
+          "training_eligible": true,
+          "basis": "verified_spamassassin_ham_semantics",
+          "label_provenance": "verified_legitimate_source"
+        },
+        "1": {
+          "status": "review",
+          "training_eligible": false,
+          "basis": "predominantly_spam_but_contains_419_and_financial_fraud",
+          "review_pool": "reports/review_spamassassin_positive.csv",
+          "rule_assisted_spam_proposal_enabled": true
+        }
+      },
+      "label_mapping": {
+        "0": "normal"
+      },
+      "label_semantics": {
+        "0": {
+          "proposed_class": "normal",
+          "confidence": "high"
+        },
+        "1": {
+          "proposed_class": "review",
+          "confidence": "high"
+        }
+      },
+      "mapping_status": "partially_verified",
+      "training_status": "exclude_unmapped_raw_labels",
+      "notes": [
+        "Raw label 0 is SpamAssassin ham and may map to normal.",
+        "Raw label 1 is predominantly spam but contains advance-fee/fraud examples; keep it under review for the three-class target.",
+        "Only keys present in label_mapping are approved for automatic standardization."
+      ]
+    }
+  }
+}

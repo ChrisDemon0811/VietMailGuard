@@ -1,0 +1,224 @@
+{
+  "schema_version": 2,
+  "analysis_scope": "bilingual_en_vi",
+  "url_rules": {
+    "long_url_length": 120,
+    "excessive_subdomain_depth": 3,
+    "ignore_subdomain_labels": ["www"],
+    "suspicious_tokens": [
+      "account", "auth", "banking", "confirm", "credential", "login",
+      "password", "recover", "secure", "signin", "suspend", "unlock",
+      "update", "verification", "verify", "wallet"
+    ],
+    "shortener_domains": [
+      "bit.ly", "buff.ly", "cutt.ly", "is.gd", "ow.ly", "t.co",
+      "tiny.cc", "tinyurl.com"
+    ],
+    "domain_patterns": [
+      {
+        "id": "many_hyphens",
+        "regex": "(?:^|\\.)(?:[a-z0-9]+-){3,}[a-z0-9]+(?:\\.|$)",
+        "description": "Hostname contains an unusually hyphenated label."
+      }
+    ]
+  },
+  "sender_rules": {
+    "maximum_at_signs": 1
+  },
+  "content_rules": {
+    "languages": {
+      "en": {
+        "patterns": {
+          "urgency": [
+            {
+              "id": "en_urgent_action",
+              "regex": "\\b(?:urgent(?:ly)?|immediately|act now|final notice|time[- ]sensitive)\\b",
+              "description": "Urgent or time-sensitive language was detected."
+            },
+            {
+              "id": "en_short_deadline",
+              "regex": "\\bwithin\\s+(?:\\d+|twenty[- ]four)\\s+hours?\\b",
+              "description": "The message sets a short action deadline."
+            }
+          ],
+          "credential_request": [
+            {
+              "id": "en_verify_sensitive_account",
+              "regex": "\\b(?:verify|confirm|update|validate|restore)\\s+(?:your\\s+)?(?:account|identity|credentials?|password|login)\\b",
+              "description": "The message asks for sensitive account verification or an update."
+            },
+            {
+              "id": "en_provide_credentials",
+              "regex": "\\b(?:enter|provide|submit|send|reply with)\\s+(?:your\\s+)?(?:password|login|credentials?|one[- ]time\\s+(?:password|code)|otp|pin)\\b",
+              "description": "The message requests credentials or an authentication code."
+            },
+            {
+              "id": "en_signin_then_verify",
+              "regex": "\\b(?:sign|log)[ -]?in\\b.{0,60}\\b(?:verify|confirm|restore|secure)\\b",
+              "description": "A sign-in instruction is coupled with account verification language."
+            }
+          ],
+          "account_suspension": [
+            {
+              "id": "en_account_at_risk",
+              "regex": "\\baccount\\b.{0,50}\\b(?:suspend(?:ed|sion)?|restrict(?:ed|ion)?|lock(?:ed)?|deactivat(?:e|ed|ion)|clos(?:e|ed|ure))\\b",
+              "description": "The message claims that an account may be suspended, restricted, locked, or closed."
+            },
+            {
+              "id": "en_restriction_then_account",
+              "regex": "\\b(?:suspend(?:ed|sion)?|restrict(?:ed|ion)?|lock(?:ed)?|deactivat(?:e|ed|ion))\\b.{0,50}\\baccount\\b",
+              "description": "Account restriction language was detected."
+            }
+          ],
+          "financial_bait": [
+            {
+              "id": "en_payment_or_bank_request",
+              "regex": "\\b(?:wire transfer|bank (?:account|details)|routing number|gift cards?|bitcoin|cryptocurrency|payment required|processing fee|advance[- ]fee)\\b",
+              "description": "Payment, banking, or advance-fee language was detected."
+            },
+            {
+              "id": "en_unlock_funds",
+              "regex": "\\b(?:pay|payment|fee)\\b.{0,60}\\b(?:release|unlock|receive|transfer)\\b.{0,30}\\b(?:funds?|money|payment)\\b",
+              "description": "A payment is presented as necessary to release or receive funds."
+            }
+          ],
+          "prize_winner": [
+            {
+              "id": "en_winner_claim",
+              "regex": "\\b(?:you (?:have )?won|selected (?:as|a) winner|lottery|jackpot|claim (?:your )?(?:reward|prize|winnings))\\b",
+              "description": "Prize, lottery, or winner language was detected."
+            }
+          ],
+          "threat": [
+            {
+              "id": "en_legal_or_data_threat",
+              "regex": "\\b(?:legal action|arrest|prosecution|financial penalty|data will be deleted|permanently disabled)\\b",
+              "description": "The message uses legal, punitive, or data-loss threats."
+            }
+          ],
+          "call_to_action": [
+            {
+              "id": "en_link_or_attachment_action",
+              "regex": "\\b(?:click (?:here|the link)|open the attachment|download the attachment|reply with|sign in now)\\b",
+              "description": "The message contains a direct link, attachment, sign-in, or reply instruction."
+            }
+          ],
+          "commercial_promotion": [
+            {
+              "id": "en_commercial_offer",
+              "regex": "\\b(?:sale|discount|promotion(?:al)?|special offer|limited[- ]time offer|buy now|shop now|save \\d+(?: percent|%)|unsubscribe)\\b",
+              "description": "Commercial, promotional, or marketing language was detected."
+            }
+          ]
+        }
+      },
+      "vi": {
+        "patterns": {
+          "urgency": [
+            {
+              "id": "vi_urgent_action",
+              "regex": "(?:khẩn cấp|ngay lập tức|ngay hôm nay|hành động ngay|\\bgấp\\b)",
+              "description": "Vietnamese urgent or time-sensitive language was detected."
+            },
+            {
+              "id": "vi_short_deadline",
+              "regex": "trong vòng\\s+(?:\\d+|hai mươi bốn)\\s+giờ",
+              "description": "The Vietnamese message sets a short action deadline."
+            }
+          ],
+          "credential_request": [
+            {
+              "id": "vi_credential_terms",
+              "regex": "(?:mật khẩu|thông tin đăng nhập|mã xác thực|mã otp|xác minh danh tính)",
+              "description": "Vietnamese credential or identity-verification language was detected."
+            },
+            {
+              "id": "vi_login_and_verification",
+              "regex": "(?:đăng nhập.{0,60}(?:xác minh|xác nhận|cập nhật)|(?:xác minh|xác nhận).{0,60}đăng nhập)",
+              "description": "A Vietnamese sign-in instruction is coupled with verification language."
+            }
+          ],
+          "account_suspension": [
+            {
+              "id": "vi_account_restriction",
+              "regex": "(?:tài khoản (?:bị|đã bị)?\\s*(?:khóa|tạm khóa)|tạm khóa.{0,30}tài khoản|khóa tài khoản)",
+              "description": "Vietnamese account-lock or suspension language was detected."
+            },
+            {
+              "id": "vi_account_verification",
+              "regex": "(?:xác minh tài khoản|xác nhận tài khoản|cập nhật tài khoản)",
+              "description": "Vietnamese account-verification language was detected."
+            }
+          ],
+          "financial_bait": [
+            {
+              "id": "vi_financial_request",
+              "regex": "(?:tài khoản ngân hàng|thông tin ngân hàng|chuyển khoản|phí xử lý|thẻ tín dụng)",
+              "description": "Vietnamese banking, transfer, fee, or credit-card language was detected."
+            },
+            {
+              "id": "vi_payment_to_receive",
+              "regex": "(?:thanh toán|trả phí).{0,60}(?:nhận|mở khóa|giải ngân).{0,30}(?:tiền|quỹ|khoản)",
+              "description": "Payment is presented as necessary to receive or unlock funds."
+            }
+          ],
+          "prize_winner": [
+            {
+              "id": "vi_prize_claim",
+              "regex": "(?:trúng thưởng|nhận thưởng|giải thưởng|nhận quà|người chiến thắng)",
+              "description": "Vietnamese prize, gift, or winner language was detected."
+            }
+          ],
+          "threat": [
+            {
+              "id": "vi_threat",
+              "regex": "(?:hành động pháp lý|bị bắt|truy tố|phạt tài chính|dữ liệu sẽ bị xóa|vô hiệu hóa vĩnh viễn)",
+              "description": "Vietnamese legal, punitive, or data-loss threat language was detected."
+            }
+          ],
+          "call_to_action": [
+            {
+              "id": "vi_call_to_action",
+              "regex": "(?:nhấp vào (?:đây|liên kết)|bấm vào (?:đây|liên kết)|mở tệp đính kèm|tải tệp đính kèm|trả lời kèm|đăng nhập ngay)",
+              "description": "The Vietnamese message contains a direct link, attachment, sign-in, or reply instruction."
+            }
+          ],
+          "commercial_promotion": [
+            {
+              "id": "vi_commercial_offer",
+              "regex": "(?:giảm giá|khuyến mãi|ưu đãi|mua ngay|giảm đến|\\bsale\\b|hủy đăng ký nhận tin)",
+              "description": "Vietnamese commercial, promotional, or marketing language was detected."
+            }
+          ]
+        }
+      }
+    },
+    "formatting": {
+      "uppercase_ratio": 0.45,
+      "minimum_alpha_characters": 20,
+      "exclamation_count": 5,
+      "question_count": 5,
+      "repeated_punctuation_run": 4
+    }
+  },
+  "explainability": {
+    "max_model_features": 5,
+    "max_security_reasons": 16,
+    "include_character_features": false,
+    "minimum_positive_contribution": 0.0
+  },
+  "recommendation_policy": {
+    "normal_review_content_codes": [
+      "credential_request", "account_suspension", "financial_bait", "prize_winner", "threat"
+    ],
+    "normal_review_url_codes": ["ip_host", "punycode", "obfuscated_url"],
+    "normal_review_sender_codes": ["sender_ip_domain", "display_domain_mismatch"],
+    "spam_review_content_codes": [
+      "credential_request", "account_suspension", "financial_bait", "prize_winner", "threat"
+    ],
+    "commercial_code": "commercial_promotion",
+    "minimum_commercial_matches_for_review": 2,
+    "normal_spam_probability_review_threshold": 0.45,
+    "review_at_or_above_risk_level": "HIGH"
+  }
+}

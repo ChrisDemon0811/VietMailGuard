@@ -1,0 +1,6 @@
+# Optional Version 2 controlled-translation environment.
+# The core Version 1 application does not require these packages at runtime.
+torch==2.8.0
+transformers==4.56.2
+sentencepiece==0.2.1
+sacremoses==0.1.1

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "experiment_scope": "v2_bilingual_validation_only",
+  "seed": 42,
+  "label_order": ["normal", "spam", "phishing"],
+  "text_columns": ["subject", "body"],
+  "data": {
+    "train": "data/splits/v2/train.csv",
+    "validation": "data/splits/v2/validation.csv"
+  },
+  "leakage_columns": [
+    "final_group_id",
+    "group_id",
+    "content_hash",
+    "normalized_content_hash",
+    "template_hash",
+    "translation_group_id"
+  ],
+  "features": {
+    "word_tfidf": {
+      "display_name": "Word TF-IDF",
+      "kind": "word",
+      "nonnegative": true,
+      "ngram_range": [1, 2],
+      "min_df": 2,
+      "max_features": 60000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "character_tfidf": {
+      "display_name": "Character TF-IDF",
+      "kind": "character",
+      "nonnegative": true,
+      "analyzer": "char_wb",
+      "ngram_range": [3, 5],
+      "min_df": 2,
+      "max_features": 80000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "word_character_tfidf": {
+      "display_name": "Word + Character TF-IDF",
+      "kind": "word_character",
+      "nonnegative": true,
+      "word": {
+        "ngram_range": [1, 2],
+        "min_df": 2,
+        "max_features": 60000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      },
+      "character": {
+        "analyzer": "char_wb",
+        "ngram_range": [3, 5],
+        "min_df": 2,
+        "max_features": 80000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      }
+    }
+  },
+  "classifiers": {
+    "multinomial_naive_bayes": {
+      "display_name": "Multinomial Naive Bayes",
+      "kind": "multinomial_nb",
+      "alpha": 1.0,
+      "fit_prior": false,
+      "deployability_rank": 0
+    },
+    "logistic_regression": {
+      "display_name": "Logistic Regression",
+      "kind": "logistic_regression",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "solver": "lbfgs",
+      "max_iter": 1000,
+      "deployability_rank": 0
+    },
+    "linear_svm": {
+      "display_name": "Linear SVM (uncalibrated)",
+      "kind": "linear_svm",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 5000,
+      "deployability_rank": 1
+    }
+  },
+  "selection": {
+    "primary_metric": "macro_f1",
+    "secondary_metric": "phishing_recall",
+    "remaining_order": [
+      "cross_language_balance",
+      "normal_false_positive_rate",
+      "deployability"
+    ],
+    "final_production_selection_deferred": true,
+    "pending_experiment": "multilingual_embeddings"
+  },
+  "v1_reference": {
+    "selected_model": "results/selected_model.json",
+    "comparison": "results/model_comparison.csv"
+  },
+  "outputs": {
+    "comparison": "results/v2_bilingual/tfidf_model_comparison.csv",
+    "metrics": "results/v2_bilingual/tfidf_validation_metrics.json",
+    "validation_directory": "results/v2_bilingual/validation",
+    "comparison_plot": "results/v2_bilingual/tfidf_macro_f1.png",
+    "candidate_directory": "models/v2_bilingual/candidates",
+    "candidate_manifest": "models/v2_bilingual/candidates/manifest.json",
+    "report": "reports/v2/tfidf_model_experiment_report.md"
+  }
+}

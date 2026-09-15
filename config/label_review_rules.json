@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "purpose": "Rule-assisted triage only. These rules never create ground-truth training labels.",
+  "candidate_groups": [
+    "likely_spam",
+    "likely_phishing_or_scam",
+    "uncertain"
+  ],
+  "decision_policy": {
+    "phishing_or_scam_min_distinct_rules": 2,
+    "spam_min_distinct_rules": 2,
+    "phishing_or_scam_precedes_spam": true,
+    "any_phishing_or_scam_signal_blocks_likely_spam": true,
+    "likely_spam_proposed_label": "spam",
+    "likely_phishing_or_scam_proposed_label": "review",
+    "uncertain_proposed_label": "review",
+    "all_rule_assisted_proposals_require_manual_confirmation": true
+  },
+  "rules": [
+    {
+      "name": "commercial_advertisement",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:advertisement|advertising|advertise|commercial offer)\\b"
+      ]
+    },
+    {
+      "name": "promotion_or_discount",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:promotion(?:al)?|special offer|discount|clearance sale|free quote|save up to|lowest rates?)\\b"
+      ]
+    },
+    {
+      "name": "sales_call_to_action",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:buy now|order now|shop now|click here to (?:buy|order|purchase)|request (?:a )?quote)\\b"
+      ]
+    },
+    {
+      "name": "marketing_language",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:email marketing|direct marketing|generate (?:hundreds of )?(?:leads|prospects)|mailing list|bulk e-?mail)\\b"
+      ]
+    },
+    {
+      "name": "unsubscribe_mechanism",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:unsubscribe|opt[- ]?out|remove me|remove from (?:this|our) (?:mailing )?list)\\b"
+      ]
+    },
+    {
+      "name": "commercial_product_or_service",
+      "family": "spam",
+      "patterns": [
+        "\\b(?:life insurance|mortgage|replica watch(?:es)?|online pharmacy|medication|web ?site design|software sale|business opportunity)\\b"
+      ]
+    },
+    {
+      "name": "credential_request",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:password|passcode|user ?name|login credentials?|security credentials?|personal identification number|pin code)\\b"
+      ]
+    },
+    {
+      "name": "account_verification",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:verify|confirm|validate|update|restore) (?:your )?(?:online )?(?:account|account details|profile|identity)\\b"
+      ]
+    },
+    {
+      "name": "login_or_signin",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:log[ -]?in|sign[ -]?in) (?:to|into|now|here|below|your account)\\b"
+      ]
+    },
+    {
+      "name": "account_suspension",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:account|mailbox|access) (?:has been |will be )?(?:suspended|locked|disabled|limited|terminated|deactivated)\\b"
+      ]
+    },
+    {
+      "name": "advance_fee",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:advance fee|processing fee|transfer fee|upfront fee|release fee|administrative fee)\\b"
+      ]
+    },
+    {
+      "name": "bank_details_or_transfer",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:bank (?:account|details)|account number|wire transfer|swift code|funds transfer|telegraphic transfer)\\b"
+      ]
+    },
+    {
+      "name": "lottery_or_prize",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:lottery|prize winner|winning notification|you (?:have )?won|claim your prize)\\b"
+      ]
+    },
+    {
+      "name": "fraud_fund_narrative",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:beneficiary|inheritance|dormant (?:account|funds?)|next of kin|million (?:united states )?dollars|business proposal|contract funds?)\\b"
+      ]
+    },
+    {
+      "name": "requested_personal_or_bank_data",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:send|provide|forward|reply with) (?:your )?(?:full name|bank details|account details|phone(?: number)?|passport|date of birth)\\b"
+      ]
+    },
+    {
+      "name": "urgency_or_confidentiality",
+      "family": "phishing_or_scam",
+      "patterns": [
+        "\\b(?:urgent(?:ly)?|immediate action|required immediately|strictly confidential|confidential proposal)\\b"
+      ]
+    }
+  ]
+}

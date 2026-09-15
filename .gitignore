@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.pytest-tmp/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.local-test-deps/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Generated data, reports, results, and model artifacts
+data/processed/*
+!data/processed/.gitkeep
+data/splits/*
+!data/splits/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+models/*
+!models/.gitkeep
+results/*
+!results/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Raw datasets are immutable local inputs. Keep only the directory marker.
+data/raw/*
+!data/raw/.gitkeep

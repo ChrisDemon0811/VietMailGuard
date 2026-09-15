@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "label_order": ["normal", "spam", "phishing"],
+  "text_columns": ["subject", "body"],
+  "data": {
+    "train": "data/splits/train.csv",
+    "validation": "data/splits/validation.csv"
+  },
+  "selection": {
+    "primary_metric": "macro_f1",
+    "secondary_metric": "phishing_recall",
+    "additional_tie_breakers": ["weighted_f1", "accuracy"]
+  },
+  "features": {
+    "word_tfidf": {
+      "display_name": "Word TF-IDF",
+      "kind": "word",
+      "ngram_range": [1, 2],
+      "min_df": 2,
+      "max_features": 60000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "character_tfidf": {
+      "display_name": "Character TF-IDF",
+      "kind": "character",
+      "analyzer": "char_wb",
+      "ngram_range": [3, 5],
+      "min_df": 2,
+      "max_features": 80000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "word_character_tfidf": {
+      "display_name": "Word + Character TF-IDF",
+      "kind": "word_character",
+      "word": {
+        "ngram_range": [1, 2],
+        "min_df": 2,
+        "max_features": 60000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      },
+      "character": {
+        "analyzer": "char_wb",
+        "ngram_range": [3, 5],
+        "min_df": 2,
+        "max_features": 80000,
+        "sublinear_tf": true,
+        "dtype": "float32"
+      }
+    }
+  },
+  "classifiers": {
+    "multinomial_naive_bayes": {
+      "display_name": "Multinomial Naive Bayes",
+      "kind": "multinomial_nb",
+      "alpha": 1.0,
+      "fit_prior": false
+    },
+    "logistic_regression": {
+      "display_name": "Logistic Regression",
+      "kind": "logistic_regression",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "solver": "lbfgs",
+      "max_iter": 1000
+    },
+    "linear_svm": {
+      "display_name": "Linear SVM (sigmoid calibrated)",
+      "kind": "calibrated_linear_svm",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 5000,
+      "calibration_method": "sigmoid",
+      "calibration_cv": 3,
+      "calibration_ensemble": false
+    }
+  },
+  "outputs": {
+    "comparison": "results/model_comparison.csv",
+    "validation_directory": "results/validation",
+    "comparison_plot": "results/model_comparison_macro_f1.png",
+    "selected_model": "results/selected_model.json",
+    "validation_candidate_pipeline": "models/validation_candidate_pipeline.joblib",
+    "report": "reports/model_selection_report.md",
+    "cache_directory": "results/.training_cache"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "development_data": {
+    "train": "data/splits/train.csv",
+    "validation": "data/splits/validation.csv"
+  },
+  "held_out_test": "data/splits/test.csv",
+  "experiment_config": "config/model_experiments.json",
+  "selected_model": "results/selected_model.json",
+  "production_pipeline": "models/production_pipeline.joblib",
+  "outputs": {
+    "metrics": "results/final_test_metrics.json",
+    "per_class_metrics": "results/final_test_per_class_metrics.csv",
+    "confusion_matrix": "results/final_test_confusion_matrix.csv",
+    "confusion_matrix_plot": "results/final_test_confusion_matrix.png",
+    "prediction_records": "results/final_test_predictions.csv",
+    "report": "reports/model_selection_report.md"
+  }
+}

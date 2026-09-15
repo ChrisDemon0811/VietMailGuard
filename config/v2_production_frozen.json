@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "model_version": "2.0.0",
+  "selection_locked_at": "2026-09-14",
+  "selection_basis": "validation_only",
+  "held_out_test_accessed_at_selection": false,
+  "selected_experiment_id": "word_tfidf__linear_svm",
+  "selection_priority": [
+    "macro_f1",
+    "phishing_recall",
+    "english_vietnamese_performance_balance",
+    "normal_false_positive_rate",
+    "inference_latency",
+    "artifact_deployment_complexity"
+  ],
+  "data": {
+    "train": "data/splits/v2/train.csv",
+    "train_sha256": "923573b51e2a63697c9975b0f04ce1e02d033d8a5790e993d7eed7763fc4732f",
+    "validation": "data/splits/v2/validation.csv",
+    "validation_sha256": "ad5978bc0e2b6d08469bda51a1639e1c17f3f98ca23b37d7155fe02aa58859c3",
+    "held_out_test": "data/splits/v2/test.csv"
+  },
+  "label_order": ["normal", "spam", "phishing"],
+  "text_composer": {
+    "class": "vietmailguard.modeling.EmailTextComposer",
+    "subject_column": "subject",
+    "body_column": "body",
+    "separator": "\n"
+  },
+  "representation": {
+    "name": "Word TF-IDF",
+    "kind": "word",
+    "analyzer": "word",
+    "ngram_range": [1, 2],
+    "lowercase": true,
+    "min_df": 2,
+    "max_features": 60000,
+    "sublinear_tf": true,
+    "dtype": "float32"
+  },
+  "classifier": {
+    "name": "LinearSVC",
+    "C": 1.0,
+    "class_weight": "balanced",
+    "max_iter": 5000,
+    "random_state": 42
+  },
+  "calibration": {
+    "wrapper": "CalibratedClassifierCV",
+    "method": "sigmoid",
+    "cv": "StratifiedGroupKFold",
+    "n_splits": 5,
+    "shuffle": true,
+    "random_state": 42,
+    "group_column": "final_group_id",
+    "ensemble": false,
+    "n_jobs": 1
+  },
+  "leakage_columns": [
+    "final_group_id",
+    "group_id",
+    "content_hash",
+    "normalized_content_hash",
+    "template_hash",
+    "translation_group_id"
+  ],
+  "selection_artifacts": {
+    "rationale": "reports/v2/model_selection_rationale.md",
+    "tfidf_comparison": "results/v2_bilingual/tfidf_model_comparison.csv",
+    "tfidf_comparison_sha256": "4b951ebcd2c5bf0702b9e848e6e0934afa6c60b53aa264d567951e3297edc524",
+    "tfidf_metrics": "results/v2_bilingual/tfidf_validation_metrics.json",
+    "tfidf_metrics_sha256": "c2564f567127f8301daa2add7838044f831a247ff719d9e34d30f66a4c19caa0",
+    "embedding_comparison": "results/v2_bilingual/multilingual_embedding_validation.csv",
+    "embedding_comparison_sha256": "67649c6503071754d354f11e06bfc4ec75447949a76b8dc004be960d19285bbe",
+    "embedding_metrics": "results/v2_bilingual/multilingual_embedding_validation_metrics.json",
+    "embedding_metrics_sha256": "d66eb770d7cb7fc5a6537ca1e9ef163bacbd61334d3a632bba16189eb1794b5d",
+    "selected_candidate": "models/v2_bilingual/candidates/word_tfidf__linear_svm.joblib",
+    "selected_candidate_sha256": "68bbcb3e425df13bd4343386420f71f8579af0beea03c8916dfc043662cda37e"
+  },
+  "outputs": {
+    "production_pipeline": "models/v2_bilingual/production_pipeline.joblib",
+    "model_metadata": "models/v2_bilingual/model_metadata.json",
+    "final_metrics": "results/v2_bilingual/final_test_metrics.json",
+    "classification_report": "results/v2_bilingual/final_test_classification_report.csv",
+    "confusion_matrix_csv": "results/v2_bilingual/final_confusion_matrix.csv",
+    "confusion_matrix_png": "results/v2_bilingual/final_confusion_matrix.png",
+    "evaluation_report": "reports/v2/final_model_evaluation.md"
+  },
+  "one_shot_guard": "results/v2_bilingual/final_test_metrics.json",
+  "post_test_tuning_allowed": false
+}

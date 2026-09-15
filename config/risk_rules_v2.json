@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "risk_engine": {
+    "description": "Version 2 bilingual decision-support heuristic frozen independently of the held-out ML test. Model confidence and risk score remain separate. Security indicators never overwrite the ML prediction.",
+    "ml_probability_weights": {
+      "normal": 0.0,
+      "spam": 12.0,
+      "phishing": 45.0
+    },
+    "prediction_bonus": {
+      "normal": 0.0,
+      "spam": 3.0,
+      "phishing": 12.0
+    },
+    "url_finding_weights": {
+      "ip_host": 12.0,
+      "plain_http": 3.0,
+      "long_url": 2.0,
+      "excessive_subdomains": 5.0,
+      "suspicious_token": 5.0,
+      "punycode": 10.0,
+      "shortener": 5.0,
+      "domain_pattern": 4.0,
+      "missing_hostname": 2.0,
+      "obfuscated_url": 7.0
+    },
+    "content_finding_weights": {
+      "urgency": 4.0,
+      "credential_request": 12.0,
+      "account_suspension": 9.0,
+      "financial_bait": 10.0,
+      "prize_winner": 8.0,
+      "threat": 7.0,
+      "call_to_action": 3.0,
+      "commercial_promotion": 5.0,
+      "excessive_uppercase": 3.0,
+      "excessive_punctuation": 2.0
+    },
+    "sender_finding_weights": {
+      "invalid_sender_format": 1.0,
+      "suspicious_sender_format": 3.0,
+      "sender_ip_domain": 8.0,
+      "sender_punycode": 5.0,
+      "display_domain_mismatch": 7.0
+    },
+    "component_caps": {
+      "ml": 57.0,
+      "url": 30.0,
+      "content": 35.0,
+      "sender": 15.0
+    },
+    "levels": [
+      {"name": "LOW", "minimum": 0, "maximum": 30},
+      {"name": "MEDIUM", "minimum": 31, "maximum": 60},
+      {"name": "HIGH", "minimum": 61, "maximum": 80},
+      {"name": "CRITICAL", "minimum": 81, "maximum": 100}
+    ]
+  }
+}

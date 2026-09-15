@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "model_language": "en",
+  "url_rules": {
+    "long_url_length": 120,
+    "excessive_subdomain_depth": 3,
+    "ignore_subdomain_labels": ["www"],
+    "suspicious_tokens": [
+      "account",
+      "auth",
+      "banking",
+      "confirm",
+      "credential",
+      "login",
+      "password",
+      "recover",
+      "secure",
+      "signin",
+      "suspend",
+      "unlock",
+      "update",
+      "verification",
+      "verify",
+      "wallet"
+    ],
+    "shortener_domains": [
+      "bit.ly",
+      "buff.ly",
+      "cutt.ly",
+      "is.gd",
+      "ow.ly",
+      "t.co",
+      "tiny.cc",
+      "tinyurl.com"
+    ],
+    "domain_patterns": [
+      {
+        "id": "many_hyphens",
+        "regex": "(?:^|\\.)(?:[a-z0-9]+-){3,}[a-z0-9]+(?:\\.|$)",
+        "description": "Hostname contains an unusually hyphenated label."
+      }
+    ]
+  },
+  "content_rules": {
+    "patterns": {
+      "urgency": [
+        {
+          "id": "urgent_action",
+          "regex": "\\b(?:urgent(?:ly)?|immediately|act now|final notice|time[- ]sensitive)\\b",
+          "description": "Urgent or time-sensitive language was detected."
+        },
+        {
+          "id": "short_deadline",
+          "regex": "\\bwithin\\s+(?:\\d+|twenty[- ]four)\\s+hours?\\b",
+          "description": "The message sets a short action deadline."
+        }
+      ],
+      "credential_request": [
+        {
+          "id": "verify_sensitive_account",
+          "regex": "\\b(?:verify|confirm|update|validate|restore)\\s+(?:your\\s+)?(?:account|identity|credentials?|password|login)\\b",
+          "description": "The message asks the recipient to verify or update sensitive account information."
+        },
+        {
+          "id": "provide_credentials",
+          "regex": "\\b(?:enter|provide|submit|send|reply with)\\s+(?:your\\s+)?(?:password|login|credentials?|one[- ]time\\s+(?:password|code)|otp|pin)\\b",
+          "description": "The message requests credentials or an authentication code."
+        },
+        {
+          "id": "signin_then_verify",
+          "regex": "\\b(?:sign|log)[ -]?in\\b.{0,60}\\b(?:verify|confirm|restore|secure)\\b",
+          "description": "A sign-in instruction is coupled with account verification language."
+        }
+      ],
+      "account_suspension": [
+        {
+          "id": "account_at_risk",
+          "regex": "\\baccount\\b.{0,50}\\b(?:suspend(?:ed|sion)?|restrict(?:ed|ion)?|lock(?:ed)?|deactivat(?:e|ed|ion)|clos(?:e|ed|ure))\\b",
+          "description": "The message claims that an account may be suspended, restricted, locked, or closed."
+        },
+        {
+          "id": "restriction_then_account",
+          "regex": "\\b(?:suspend(?:ed|sion)?|restrict(?:ed|ion)?|lock(?:ed)?|deactivat(?:e|ed|ion))\\b.{0,50}\\baccount\\b",
+          "description": "Account restriction language was detected."
+        }
+      ],
+      "financial_bait": [
+        {
+          "id": "payment_or_bank_request",
+          "regex": "\\b(?:wire transfer|bank (?:account|details)|routing number|gift cards?|bitcoin|cryptocurrency|payment required|processing fee|advance[- ]fee)\\b",
+          "description": "The message contains payment, banking, or advance-fee language."
+        },
+        {
+          "id": "unlock_funds",
+          "regex": "\\b(?:pay|payment|fee)\\b.{0,60}\\b(?:release|unlock|receive|transfer)\\b.{0,30}\\b(?:funds?|money|payment)\\b",
+          "description": "A payment is presented as necessary to release or receive funds."
+        }
+      ],
+      "prize_winner": [
+        {
+          "id": "winner_claim",
+          "regex": "\\b(?:you (?:have )?won|selected (?:as|a) winner|lottery|jackpot|claim (?:your )?(?:reward|prize|winnings))\\b",
+          "description": "Prize, lottery, or winner language was detected."
+        }
+      ],
+      "threat": [
+        {
+          "id": "legal_or_data_threat",
+          "regex": "\\b(?:legal action|arrest|prosecution|financial penalty|data will be deleted|permanently disabled)\\b",
+          "description": "The message uses legal, punitive, or data-loss threats."
+        }
+      ],
+      "call_to_action": [
+        {
+          "id": "link_or_attachment_action",
+          "regex": "\\b(?:click (?:here|the link)|open the attachment|download the attachment|reply with)\\b",
+          "description": "The message contains a direct link, attachment, or reply instruction."
+        }
+      ]
+    },
+    "formatting": {
+      "uppercase_ratio": 0.45,
+      "minimum_alpha_characters": 20,
+      "exclamation_count": 5,
+      "question_count": 5,
+      "repeated_punctuation_run": 4
+    }
+  },
+  "risk_engine": {
+    "description": "Version 1 decision-support heuristic. Phishing probability and credential/fraud indicators receive more weight than ordinary commercial spam. Component caps prevent repeated indicators from dominating the score.",
+    "ml_probability_weights": {
+      "normal": 0.0,
+      "spam": 12.0,
+      "phishing": 45.0
+    },
+    "prediction_bonus": {
+      "normal": 0.0,
+      "spam": 3.0,
+      "phishing": 12.0
+    },
+    "url_finding_weights": {
+      "ip_host": 12.0,
+      "plain_http": 3.0,
+      "long_url": 2.0,
+      "excessive_subdomains": 5.0,
+      "suspicious_token": 5.0,
+      "punycode": 10.0,
+      "shortener": 5.0,
+      "domain_pattern": 4.0,
+      "missing_hostname": 2.0
+    },
+    "content_finding_weights": {
+      "urgency": 4.0,
+      "credential_request": 12.0,
+      "account_suspension": 9.0,
+      "financial_bait": 10.0,
+      "prize_winner": 8.0,
+      "threat": 7.0,
+      "call_to_action": 3.0,
+      "excessive_uppercase": 3.0,
+      "excessive_punctuation": 2.0
+    },
+    "component_caps": {
+      "ml": 57.0,
+      "url": 30.0,
+      "content": 35.0
+    },
+    "levels": [
+      {"name": "LOW", "minimum": 0, "maximum": 30},
+      {"name": "MEDIUM", "minimum": 31, "maximum": 60},
+      {"name": "HIGH", "minimum": 61, "maximum": 80},
+      {"name": "CRITICAL", "minimum": 81, "maximum": 100}
+    ]
+  },
+  "explainability": {
+    "max_model_features": 5,
+    "max_security_reasons": 12,
+    "include_character_features": false,
+    "minimum_positive_contribution": 0.0
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "random_seed": 42,
+  "production_training_splits": [
+    "data/splits/v2/train.csv",
+    "data/splits/v2/validation.csv"
+  ],
+  "posthoc_seed_split": "data/splits/v2/test.csv",
+  "production_model": "models/v2_bilingual/production_pipeline.joblib",
+  "model_metadata": "models/v2_bilingual/model_metadata.json",
+  "frozen_model_sha256": "b2ebecf641f2a5fd3ce9f0d0680a90884850e46b59c48ce0ab5bd4fee64f87fa",
+  "vietnamese_robustness": {
+    "normal_parent_count": 32,
+    "spam_parent_count": 8,
+    "selection": "deterministic_hash_within_four_text_length_strata",
+    "transformations": [
+      "clean_accented",
+      "remove_accents",
+      "character_substitution",
+      "spacing_obfuscation",
+      "punctuation_noise",
+      "mixed_language"
+    ]
+  },
+  "short_form_challenge": {
+    "scenario_families_per_class_language": 5,
+    "length_variants": ["very_short", "short", "normal_length"],
+    "length_thresholds_tokens": {
+      "very_short_max_exclusive": 50,
+      "short_max_inclusive": 150,
+      "normal_length_min_exclusive": 150
+    },
+    "provenance": "synthetic_challenge_scenario"
+  },
+  "confidence_overestimation_threshold": 0.8,
+  "scientific_boundaries": [
+    "No production model fitting, tuning, TF-IDF fitting, or recalibration is permitted.",
+    "Robustness and challenge metrics remain separate from the frozen held-out test metrics.",
+    "The posthoc robustness seed is drawn only from rows outside production training.",
+    "Synthetic challenge results are diagnostic and are not real-world or native-Vietnamese performance estimates."
+  ]
+}

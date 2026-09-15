@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "inputs": {
+    "english_master": "data/processed/English_Master_Dataset.csv",
+    "vietnamese_curated": "data/curated/v2/Vietnamese_Curated_Dataset.csv",
+    "vietnamese_augmentation": "data/processed/Vietnamese_Translated_Augmentation.csv",
+    "cross_language_overlap": "reports/v2/cross_language_overlap.csv"
+  },
+  "outputs": {
+    "master": "data/processed/Bilingual_Master_Dataset.csv",
+    "train": "data/splits/v2/train.csv",
+    "validation": "data/splits/v2/validation.csv",
+    "test": "data/splits/v2/test.csv",
+    "evaluation_manifest": "data/splits/v2/evaluation_manifest.json",
+    "dataset_report": "reports/v2/bilingual_dataset_report.md",
+    "split_report": "reports/v2/bilingual_split_report.md"
+  },
+  "valid_labels": ["normal", "spam", "phishing"],
+  "english_label_provenance": {
+    "normal": ["verified_legitimate_source"],
+    "spam": ["high_confidence_curated_spam"],
+    "phishing": ["nazario_phishing"]
+  },
+  "trusted_cross_language_statuses": [
+    "linked_exact_provenance",
+    "linked_high_confidence_evidence"
+  ],
+  "vietnamese_curated_policy": {
+    "require_training_eligible": true,
+    "require_trusted_parent_link": true,
+    "exclude_unresolved_linkage_from_all_splits": true
+  },
+  "augmentation_policy": {
+    "required_quality_status": "accepted",
+    "required_protected_token_validation": "passed",
+    "split_constraint": "train_only",
+    "source_name": "controlled_translation"
+  },
+  "splitting": {
+    "seed": 42,
+    "ratios": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    }
+  }
+}

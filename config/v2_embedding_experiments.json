@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "experiment_scope": "v2_multilingual_embedding_validation_only",
+  "seed": 42,
+  "label_order": ["normal", "spam", "phishing"],
+  "data": {
+    "train": "data/splits/v2/train.csv",
+    "validation": "data/splits/v2/validation.csv"
+  },
+  "leakage_columns": [
+    "final_group_id",
+    "group_id",
+    "content_hash",
+    "normalized_content_hash",
+    "template_hash",
+    "translation_group_id"
+  ],
+  "embedding": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e04d38a7d68c60a7a95390045400a555127ab033",
+    "provider": "sentence-transformers on Hugging Face",
+    "license": "Apache-2.0",
+    "embedding_dimension": 384,
+    "max_sequence_length": 128,
+    "batch_size_cuda": 64,
+    "batch_size_cpu": 16,
+    "normalize_embeddings": true,
+    "cache_directory": "data/cache/embeddings/v2"
+  },
+  "classifiers": {
+    "logistic_regression": {
+      "display_name": "Logistic Regression",
+      "kind": "logistic_regression",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "solver": "lbfgs",
+      "max_iter": 2000
+    },
+    "linear_svm": {
+      "display_name": "Linear SVM (uncalibrated)",
+      "kind": "linear_svm",
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 5000
+    }
+  },
+  "references": {
+    "v1_selected_model": "results/selected_model.json",
+    "v2_tfidf_metrics": "results/v2_bilingual/tfidf_validation_metrics.json"
+  },
+  "outputs": {
+    "comparison": "results/v2_bilingual/multilingual_embedding_validation.csv",
+    "metrics": "results/v2_bilingual/multilingual_embedding_validation_metrics.json",
+    "candidate_directory": "models/v2_bilingual/candidates",
+    "candidate_manifest": "models/v2_bilingual/candidates/embedding_manifest.json",
+    "report": "reports/v2/multilingual_embedding_experiment.md"
+  }
+}

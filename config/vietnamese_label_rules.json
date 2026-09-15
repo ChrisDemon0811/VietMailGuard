@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "taxonomy": ["spam", "phishing", "review", "exclude"],
+  "human_decisions": ["spam", "phishing", "review", "exclude"],
+  "trusted_parent_label_provenance": {
+    "spam": ["high_confidence_curated_spam"],
+    "phishing": ["nazario_phishing"]
+  },
+  "trusted_parent_link_statuses": [
+    "linked_exact_provenance",
+    "linked_high_confidence_evidence"
+  ],
+  "minimum_distinct_rules_for_proposal": 2,
+  "minimum_meaningful_characters": 30,
+  "minimum_meaningful_tokens": 5,
+  "rules": {
+    "commercial_offer": [
+      "\\b(?:mua|bán|đặt hàng|giá chỉ|báo giá|chào hàng|buy|order|price|sale)\\b"
+    ],
+    "promotion_discount": [
+      "\\b(?:khuyến mãi|khuyến mại|giảm giá|chiết khấu|miễn phí vận chuyển|free shipping|discount|special offer)\\b"
+    ],
+    "marketing_language": [
+      "\\b(?:quảng cáo|tiếp thị|bản tin|newsletter|unsubscribe|hủy đăng ký|opt[ -]?out|mailing list)\\b"
+    ],
+    "product_service_solicitation": [
+      "\\b(?:sản phẩm|dịch vụ|phần mềm|thuốc|viagra|hosting|vay thế chấp|bảo hiểm|logo|product|service)\\b"
+    ],
+    "promotional_call_to_action": [
+      "\\b(?:mua ngay|đặt ngay|gọi ngay|truy cập ngay|nhấp vào đây|click here|order now|call now|visit us)\\b"
+    ],
+    "bulk_distribution": [
+      "\\b(?:gửi hàng loạt|danh sách email|hàng triệu người nhận|bulk email|mass mail)\\b"
+    ],
+    "password_or_login": [
+      "\\b(?:mật khẩu|đăng nhập|password|login|passcode)\\b"
+    ],
+    "credential_request": [
+      "\\b(?:tên đăng nhập|thông tin đăng nhập|mã pin|credentials?|username|user id)\\b"
+    ],
+    "account_verification": [
+      "\\b(?:xác minh|xác nhận danh tính|verify|verification|confirm identity)\\b.{0,80}\\b(?:tài khoản|account|identity)\\b|\\b(?:tài khoản|account)\\b.{0,80}\\b(?:xác minh|verify|verification)\\b"
+    ],
+    "account_suspension": [
+      "\\b(?:tài khoản|account)\\b.{0,100}\\b(?:bị khóa|khóa|tạm ngưng|đình chỉ|vô hiệu hóa|suspended|suspension|disabled|locked)\\b"
+    ],
+    "urgent_security_action": [
+      "\\b(?:khẩn cấp|ngay lập tức|trong vòng 24 giờ|urgent|immediately)\\b.{0,120}\\b(?:tài khoản|bảo mật|account|security|login)\\b"
+    ],
+    "organization_impersonation": [
+      "\\b(?:paypal|microsoft|apple|amazon|ebay|visa|mastercard|ngân hàng|bank)\\b.{0,120}\\b(?:tài khoản|xác minh|bảo mật|account|verify|security)\\b"
+    ],
+    "financial_information_request": [
+      "\\b(?:thông tin ngân hàng|chi tiết ngân hàng|số thẻ|tài khoản ngân hàng|bank details|bank account|card number|routing number)\\b"
+    ],
+    "payment_to_release_funds": [
+      "\\b(?:phí xử lý|phí chuyển khoản|thanh toán trước|payment fee|processing fee|transfer fee)\\b.{0,140}\\b(?:quỹ|tiền|khoản tiền|funds?|money|transfer)\\b|\\b(?:quỹ|tiền|khoản tiền|funds?|money)\\b.{0,140}\\b(?:phí xử lý|phí chuyển khoản|thanh toán trước|processing fee|transfer fee)\\b"
+    ],
+    "large_fund_bait": [
+      "\\b(?:triệu đô|million dollars?|usd ?[0-9,.]{5,}|[0-9,.]{5,} ?usd)\\b"
+    ],
+    "lottery_winner": [
+      "\\b(?:xổ số|lottery|jackpot)\\b.{0,120}\\b(?:trúng|người thắng|winner|won|prize|giải thưởng)\\b|\\b(?:trúng|người thắng|winner|won)\\b.{0,120}\\b(?:xổ số|lottery|jackpot)\\b"
+    ],
+    "prize_claim": [
+      "\\b(?:nhận giải|nhận thưởng|claim (?:your )?prize|claim (?:your )?award)\\b"
+    ],
+    "inheritance_or_deceased": [
+      "\\b(?:thừa kế|người thừa kế|người đã khuất|qua đời|inheritance|beneficiary|deceased|next of kin)\\b"
+    ],
+    "advance_fee_identity": [
+      "\\b(?:hoàng tử nigeria|nigerian prince|419|quỹ chưa có người nhận|unclaimed funds?|dormant account)\\b"
+    ],
+    "confidential_transfer_proposal": [
+      "\\b(?:đề nghị kinh doanh bí mật|giao dịch bí mật|confidential business proposal|confidential transaction)\\b"
+    ]
+  },
+  "evidence_groups": {
+    "credential_phishing": ["password_or_login", "credential_request", "account_verification", "urgent_security_action"],
+    "account_impersonation": ["organization_impersonation", "account_suspension", "urgent_security_action", "account_verification"],
+    "financial_fraud": ["financial_information_request", "payment_to_release_funds", "large_fund_bait"],
+    "lottery_scam": ["lottery_winner", "prize_claim", "financial_information_request"],
+    "advance_fee_fraud": ["inheritance_or_deceased", "advance_fee_identity", "confidential_transfer_proposal", "payment_to_release_funds", "large_fund_bait"],
+    "commercial_spam": ["commercial_offer", "promotion_discount", "marketing_language", "product_service_solicitation", "promotional_call_to_action", "bulk_distribution"]
+  },
+  "strong_conflict_groups_for_spam_parent": [
+    "credential_phishing",
+    "account_impersonation",
+    "lottery_scam",
+    "advance_fee_fraud"
+  ],
+  "notes": [
+    "Rules create review evidence and proposals only; they are not ground truth.",
+    "A trusted parent label may transfer only through a trusted high-confidence link and without conflicting semantics.",
+    "Translated labels must never be described as native Vietnamese ground truth."
+  ]
+}
