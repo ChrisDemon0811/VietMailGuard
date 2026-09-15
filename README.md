@@ -1,5 +1,11 @@
 # VietMailGuard
 
+## Project documentation
+
+- [VietMailGuard V2 Model Card](MODEL_CARD.md)
+- [Dataset provenance and licensing](DATASETS.md)
+- [Tested environment and reproducibility](ENVIRONMENT.md)
+
 ## English
 
 VietMailGuard Version 2 is a reproducible three-class email security project. Its frozen production model analyzes English and Vietnamese content and returns one internal label: `normal`, `spam`, or `phishing`.
@@ -197,6 +203,25 @@ If the project directory was moved after `.venv` was created, use the environmen
 .venv\Scripts\python.exe -m streamlit run app\app.py
 ```
 
+### Continuous integration
+
+The normal workflow at `.github/workflows/ci.yml` runs on push and pull requests with Python 3.11. It installs only the core requirements and runs:
+
+```bat
+python -m pytest -m "not production_artifact" -q
+```
+
+This lane does not download the production model, raw datasets, translation models or embedding models. Tests for optional local generated datasets skip with an explicit reason when those artifacts are absent.
+
+The manually dispatched `.github/workflows/production-integration.yml` is the separate release-artifact lane. Before running it, configure the repository Actions variable `V2_PRODUCTION_MODEL_URL` with the official HTTPS URL of the `production_pipeline.joblib` GitHub Release asset. The workflow fails clearly when the variable is absent. It downloads through `scripts/download_production_model.py`, verifies SHA-256 against `model_metadata.json`, then runs:
+
+```bat
+python -m pytest -m "production_artifact" -q
+python scripts\smoke_inference_v2.py
+```
+
+No placeholder or unofficial model URL is embedded in the repository.
+
 ### Limitations and future work
 
 - No independent native Vietnamese benchmark exists.
@@ -288,6 +313,16 @@ python scripts\evaluate_v2_robustness.py
 python -m streamlit run app\app.py
 python -m pytest -q
 ```
+
+### Continuous integration
+
+Workflow thường tại `.github/workflows/ci.yml` chạy source-level/unit tests trên Python 3.11 khi push hoặc tạo pull request. Lane này không tải production model, raw dataset, translation Transformer hoặc embedding Transformer:
+
+```bat
+python -m pytest -m "not production_artifact" -q
+```
+
+Workflow `.github/workflows/production-integration.yml` chỉ chạy thủ công. Trước khi chạy, cần cấu hình Actions repository variable `V2_PRODUCTION_MODEL_URL` thành URL HTTPS chính thức của GitHub Release asset `production_pipeline.joblib`. Workflow sẽ fail rõ ràng nếu chưa cấu hình URL, kiểm tra SHA-256 theo `model_metadata.json`, rồi chạy production-artifact tests và inference smoke test.
 
 ### Giới hạn
 

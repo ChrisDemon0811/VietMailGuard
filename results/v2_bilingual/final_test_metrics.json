@@ -1,0 +1,610 @@
+{
+  "schema_version": 1,
+  "evaluation": "v2_held_out_test_one_shot",
+  "held_out_test_evaluation_count": 1,
+  "selection_completed_before_test_access": true,
+  "post_test_tuning_allowed": false,
+  "selected_experiment_id": "word_tfidf__linear_svm",
+  "frozen_config": "config/v2_production_frozen.json",
+  "frozen_config_sha256": "6840d17269d0364369f5f61418a549efea51ec699bffb91cde0349954f946d60",
+  "selection_rationale": "reports/v2/model_selection_rationale.md",
+  "selection_rationale_sha256": "2dcf050f2bb4ca5ed99cbf4671b298d0b94cbf3be7bdddb3afbd6d92da3e7586",
+  "final_refit": {
+    "input_splits": [
+      "train",
+      "validation"
+    ],
+    "rows": 38013,
+    "summary": {
+      "rows": 38013,
+      "groups": 36505,
+      "class_distribution": {
+        "normal": 34734,
+        "phishing": 1733,
+        "spam": 1546
+      },
+      "source_distribution": {
+        "CEAS_08": 14741,
+        "Enron": 13714,
+        "Ling": 2110,
+        "Nazario": 1242,
+        "SpamAssassin": 3780,
+        "controlled_translation": 1460,
+        "data_vi": 966
+      },
+      "language_distribution": {
+        "en": 35587,
+        "vi": 2426
+      }
+    },
+    "fit_seconds": 37.96711189999951,
+    "calibration_folds": 5,
+    "calibration_group_column": "final_group_id"
+  },
+  "test_data": {
+    "path": "data/splits/v2/test.csv",
+    "sha256_from_single_read_snapshot": "c0363e0853416fff93a478337df5940189f99d3347cab29534e5ec43ec136993",
+    "rows": 6704,
+    "groups": 6696,
+    "class_distribution": {
+      "normal": 6127,
+      "phishing": 306,
+      "spam": 271
+    },
+    "source_distribution": {
+      "CEAS_08": 2648,
+      "Enron": 2553,
+      "Ling": 357,
+      "Nazario": 306,
+      "SpamAssassin": 661,
+      "data_vi": 179
+    },
+    "language_distribution": {
+      "en": 6525,
+      "vi": 179
+    },
+    "origin_distribution": {
+      "original_english_artifact": 6525,
+      "translated": 179
+    }
+  },
+  "leakage_checks": {
+    "passed": true,
+    "columns": [
+      "final_group_id",
+      "group_id",
+      "content_hash",
+      "normalized_content_hash",
+      "template_hash",
+      "translation_group_id"
+    ],
+    "test_parent_ids_in_development": 0,
+    "controlled_test_rows": 0,
+    "verified_test_parent_rows": 0
+  },
+  "overall_test_metrics": {
+    "accuracy": 0.9977625298329356,
+    "macro_precision": 0.9979915171182601,
+    "macro_recall": 0.9839916129266228,
+    "macro_f1": 0.9908998058833015,
+    "weighted_f1": 0.9977503698003827,
+    "per_class": {
+      "normal": {
+        "precision": 0.9977198697068403,
+        "recall": 0.9998367879875959,
+        "f1": 0.9987772071411103,
+        "support": 6127
+      },
+      "spam": {
+        "precision": 0.9962546816479401,
+        "recall": 0.981549815498155,
+        "f1": 0.9888475836431226,
+        "support": 271
+      },
+      "phishing": {
+        "precision": 1.0,
+        "recall": 0.9705882352941176,
+        "f1": 0.9850746268656716,
+        "support": 306
+      }
+    },
+    "confusion_matrix": [
+      [
+        6126,
+        1,
+        0
+      ],
+      [
+        5,
+        266,
+        0
+      ],
+      [
+        9,
+        0,
+        297
+      ]
+    ],
+    "confusion_matrix_label_order": [
+      "normal",
+      "spam",
+      "phishing"
+    ]
+  },
+  "test_subset_metrics": {
+    "combined": {
+      "rows": 6704,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977625298329356,
+      "macro_precision_supported_classes": 0.9979915171182601,
+      "macro_recall_supported_classes": 0.9839916129266228,
+      "macro_f1_supported_classes": 0.9908998058833015,
+      "three_class_macro_f1": 0.9908998058833015,
+      "per_class": {
+        "normal": {
+          "precision": 0.9977198697068403,
+          "recall": 0.9998367879875959,
+          "f1": 0.9987772071411103,
+          "support": 6127
+        },
+        "spam": {
+          "precision": 0.9962546816479401,
+          "recall": 0.981549815498155,
+          "f1": 0.9888475836431226,
+          "support": 271
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          6126,
+          1,
+          0
+        ],
+        [
+          5,
+          266,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9977503698003827
+    },
+    "english_test": {
+      "rows": 6525,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977011494252873,
+      "macro_precision_supported_classes": 0.9979311815465275,
+      "macro_recall_supported_classes": 0.9838029768439819,
+      "macro_f1_supported_classes": 0.9907741707856296,
+      "three_class_macro_f1": 0.9907741707856296,
+      "per_class": {
+        "normal": {
+          "precision": 0.9976545485005863,
+          "recall": 0.9998321020819342,
+          "f1": 0.9987421383647799,
+          "support": 5956
+        },
+        "spam": {
+          "precision": 0.9961389961389961,
+          "recall": 0.9809885931558935,
+          "f1": 0.9885057471264368,
+          "support": 263
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          5955,
+          1,
+          0
+        ],
+        [
+          5,
+          258,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9976885859641038
+    },
+    "translated_vietnamese_test": {
+      "rows": 179,
+      "supported_classes": [
+        "normal",
+        "spam"
+      ],
+      "accuracy": 1.0,
+      "macro_precision_supported_classes": 1.0,
+      "macro_recall_supported_classes": 1.0,
+      "macro_f1_supported_classes": 1.0,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 171
+        },
+        "spam": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 8
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          171,
+          0,
+          0
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 1.0
+    },
+    "original_english": {
+      "rows": 6525,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977011494252873,
+      "macro_precision_supported_classes": 0.9979311815465275,
+      "macro_recall_supported_classes": 0.9838029768439819,
+      "macro_f1_supported_classes": 0.9907741707856296,
+      "three_class_macro_f1": 0.9907741707856296,
+      "per_class": {
+        "normal": {
+          "precision": 0.9976545485005863,
+          "recall": 0.9998321020819342,
+          "f1": 0.9987421383647799,
+          "support": 5956
+        },
+        "spam": {
+          "precision": 0.9961389961389961,
+          "recall": 0.9809885931558935,
+          "f1": 0.9885057471264368,
+          "support": 263
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          5955,
+          1,
+          0
+        ],
+        [
+          5,
+          258,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9976885859641038
+    },
+    "existing_translated_vietnamese": {
+      "rows": 179,
+      "supported_classes": [
+        "normal",
+        "spam"
+      ],
+      "accuracy": 1.0,
+      "macro_precision_supported_classes": 1.0,
+      "macro_recall_supported_classes": 1.0,
+      "macro_f1_supported_classes": 1.0,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 171
+        },
+        "spam": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 8
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          171,
+          0,
+          0
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 1.0
+    },
+    "controlled_translation_augmentation_descendants": {
+      "rows": 0,
+      "supported_classes": [],
+      "accuracy": null,
+      "macro_precision_supported_classes": null,
+      "macro_recall_supported_classes": null,
+      "macro_f1_supported_classes": null,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        },
+        "spam": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": null
+    }
+  },
+  "v1_comparison": {
+    "v1_saved_test_metrics": {
+      "accuracy": 0.9979414093428345,
+      "macro_precision": 0.9880255138722113,
+      "macro_recall": 0.9893995648199826,
+      "macro_f1": 0.9887109986479355,
+      "weighted_f1": 0.9979414921865486,
+      "per_class": {
+        "normal": {
+          "precision": 0.9989806320081549,
+          "recall": 0.9988109393579072,
+          "f1": 0.9988957784761743,
+          "support": 5887
+        },
+        "spam": {
+          "precision": 0.9693877551020408,
+          "recall": 0.9693877551020408,
+          "f1": 0.9693877551020408,
+          "support": 196
+        },
+        "phishing": {
+          "precision": 0.9957081545064378,
+          "recall": 1.0,
+          "f1": 0.9978494623655914,
+          "support": 232
+        }
+      },
+      "confusion_matrix": [
+        [
+          5880,
+          6,
+          1
+        ],
+        [
+          6,
+          190,
+          0
+        ],
+        [
+          0,
+          0,
+          232
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ]
+    },
+    "v1_saved_test_metrics_note": "Version 1 uses its own English held-out cohort; comparison with V2 is descriptive.",
+    "exact_v2_english_subset": null,
+    "exact_v2_translated_vietnamese_subset": null,
+    "v1_saved_test_rows": 6315,
+    "v2_english_rows": 6525,
+    "v2_english_rows_seen_in_v1_development": 5530,
+    "v2_translated_vietnamese_rows": 179,
+    "v2_translated_rows_with_known_parent": 179,
+    "v2_translated_parent_rows_seen_in_v1_development": 144,
+    "exact_v2_english_limitation": "V1 cannot be evaluated fairly on the exact V2 English test subset because rows/groups from that subset occur in V1 development data.",
+    "exact_v2_translated_vietnamese_limitation": "A leakage-safe V1 comparison on the exact translated-Vietnamese subset cannot be established because parent provenance is incomplete or a known parent/content/group appears in V1 development data."
+  },
+  "production_artifact": {
+    "path": "models/v2_bilingual/production_pipeline.joblib",
+    "sha256": "b2ebecf641f2a5fd3ce9f0d0680a90884850e46b59c48ce0ab5bd4fee64f87fa",
+    "reload_smoke_test": true,
+    "calibrated_probability_smoke_test": true,
+    "smoke_predictions": [
+      {
+        "scenario": "English normal example",
+        "prediction": "normal",
+        "confidence": 0.9981856590120877,
+        "class_probabilities": {
+          "normal": 0.9981856590120877,
+          "phishing": 0.001771413200910351,
+          "spam": 4.292778700182557e-05
+        }
+      },
+      {
+        "scenario": "English spam example",
+        "prediction": "normal",
+        "confidence": 0.9981568238236966,
+        "class_probabilities": {
+          "normal": 0.9981568238236966,
+          "phishing": 0.00020359950078747337,
+          "spam": 0.0016395766755159605
+        }
+      },
+      {
+        "scenario": "English phishing example",
+        "prediction": "phishing",
+        "confidence": 0.9996379204894649,
+        "class_probabilities": {
+          "normal": 0.00034255144285334614,
+          "phishing": 0.9996379204894649,
+          "spam": 1.9528067681760265e-05
+        }
+      },
+      {
+        "scenario": "Vietnamese normal example",
+        "prediction": "normal",
+        "confidence": 0.999772044494485,
+        "class_probabilities": {
+          "normal": 0.999772044494485,
+          "phishing": 1.813901171193417e-05,
+          "spam": 0.00020981649380306364
+        }
+      },
+      {
+        "scenario": "Vietnamese spam-like example",
+        "prediction": "normal",
+        "confidence": 0.5035636607456143,
+        "class_probabilities": {
+          "normal": 0.5035636607456143,
+          "phishing": 0.00036584936949910646,
+          "spam": 0.49607048988488656
+        }
+      },
+      {
+        "scenario": "Vietnamese phishing-like example",
+        "prediction": "phishing",
+        "confidence": 0.9741603014805412,
+        "class_probabilities": {
+          "normal": 0.02583528451521213,
+          "phishing": 0.9741603014805412,
+          "spam": 4.414004246561144e-06
+        }
+      }
+    ]
+  },
+  "prediction_seconds": 2.722346700000344,
+  "native_vietnamese_benchmark": {
+    "available": false,
+    "statement": "Native Vietnamese benchmark is not available."
+  },
+  "runtime_versions": {
+    "python": "3.13.14",
+    "pandas": "3.0.5",
+    "numpy": "2.5.3",
+    "scikit_learn": "1.9.1",
+    "joblib": "1.6.0",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "completed_at": "2026-09-14T14:45:36.799975+00:00"
+}

@@ -1,0 +1,53 @@
+name: Production artifact integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-integration:
+    name: Frozen V2 artifact checks (Python 3.11)
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      V2_PRODUCTION_MODEL_URL: ${{ vars.V2_PRODUCTION_MODEL_URL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements-lock.txt
+            pyproject.toml
+
+      - name: Install locked production dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-lock.txt
+          python -m pip install -e . --no-deps
+
+      - name: Require an official Release asset URL
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:V2_PRODUCTION_MODEL_URL)) {
+            throw "V2_PRODUCTION_MODEL_URL is not configured. Set this repository variable to the official GitHub Release asset URL before running production integration."
+          }
+
+      - name: Download and verify frozen production model
+        run: python scripts/download_production_model.py
+
+      - name: Check dependency consistency
+        run: python -m pip check
+
+      - name: Run production-artifact tests
+        run: python -m pytest -m "production_artifact" -q
+
+      - name: Run production inference smoke test
+        run: python scripts/smoke_inference_v2.py

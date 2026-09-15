@@ -1,0 +1,25 @@
+evaluation_scope,row_type,class,rows,supported_classes,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,precision,recall,f1,support,availability_note
+combined,scope_summary,all_supported_classes,6704,"normal,spam,phishing",0.9977625298329356,0.9979915171182601,0.9839916129266228,0.9908998058833015,0.9977503698003827,,,,6704,all three classes supported
+combined,class_metric,normal,6704,"normal,spam,phishing",,,,,,0.9977198697068403,0.9998367879875959,0.9987772071411103,6127,
+combined,class_metric,spam,6704,"normal,spam,phishing",,,,,,0.9962546816479401,0.981549815498155,0.9888475836431226,271,
+combined,class_metric,phishing,6704,"normal,spam,phishing",,,,,,1.0,0.9705882352941176,0.9850746268656716,306,
+english_test,scope_summary,all_supported_classes,6525,"normal,spam,phishing",0.9977011494252873,0.9979311815465275,0.9838029768439819,0.9907741707856296,0.9976885859641038,,,,6525,all three classes supported
+english_test,class_metric,normal,6525,"normal,spam,phishing",,,,,,0.9976545485005863,0.9998321020819342,0.9987421383647799,5956,
+english_test,class_metric,spam,6525,"normal,spam,phishing",,,,,,0.9961389961389961,0.9809885931558935,0.9885057471264368,263,
+english_test,class_metric,phishing,6525,"normal,spam,phishing",,,,,,1.0,0.9705882352941176,0.9850746268656716,306,
+translated_vietnamese_test,scope_summary,all_supported_classes,179,"normal,spam",1.0,1.0,1.0,1.0,1.0,,,,179,macro metrics cover supported classes only; absent classes are N/A
+translated_vietnamese_test,class_metric,normal,179,"normal,spam",,,,,,1.0,1.0,1.0,171,
+translated_vietnamese_test,class_metric,spam,179,"normal,spam",,,,,,1.0,1.0,1.0,8,
+translated_vietnamese_test,class_metric,phishing,179,"normal,spam",,,,,,,,,0,N/A: class absent from subset
+original_english,scope_summary,all_supported_classes,6525,"normal,spam,phishing",0.9977011494252873,0.9979311815465275,0.9838029768439819,0.9907741707856296,0.9976885859641038,,,,6525,all three classes supported
+original_english,class_metric,normal,6525,"normal,spam,phishing",,,,,,0.9976545485005863,0.9998321020819342,0.9987421383647799,5956,
+original_english,class_metric,spam,6525,"normal,spam,phishing",,,,,,0.9961389961389961,0.9809885931558935,0.9885057471264368,263,
+original_english,class_metric,phishing,6525,"normal,spam,phishing",,,,,,1.0,0.9705882352941176,0.9850746268656716,306,
+existing_translated_vietnamese,scope_summary,all_supported_classes,179,"normal,spam",1.0,1.0,1.0,1.0,1.0,,,,179,macro metrics cover supported classes only; absent classes are N/A
+existing_translated_vietnamese,class_metric,normal,179,"normal,spam",,,,,,1.0,1.0,1.0,171,
+existing_translated_vietnamese,class_metric,spam,179,"normal,spam",,,,,,1.0,1.0,1.0,8,
+existing_translated_vietnamese,class_metric,phishing,179,"normal,spam",,,,,,,,,0,N/A: class absent from subset
+controlled_translation_augmentation_descendants,scope_summary,all_supported_classes,0,,,,,,,,,,0,macro metrics cover supported classes only; absent classes are N/A
+controlled_translation_augmentation_descendants,class_metric,normal,0,,,,,,,,,,0,N/A: class absent from subset
+controlled_translation_augmentation_descendants,class_metric,spam,0,,,,,,,,,,0,N/A: class absent from subset
+controlled_translation_augmentation_descendants,class_metric,phishing,0,,,,,,,,,,0,N/A: class absent from subset

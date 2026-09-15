@@ -3,11 +3,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 APP_PATH = PROJECT_ROOT / "app" / "app.py"
+pytestmark = pytest.mark.production_artifact
+
+DATASET_DASHBOARD_ARTIFACTS = [
+    PROJECT_ROOT / "data" / "splits" / "v2" / f"{name}.csv"
+    for name in ("train", "validation", "test")
+] + [
+    PROJECT_ROOT / "data" / "curated" / "v2" / "Vietnamese_Curated_Dataset.csv",
+    PROJECT_ROOT / "data" / "processed" / "Vietnamese_Translated_Augmentation.csv",
+]
 
 
 def test_all_streamlit_pages_render_saved_artifacts() -> None:
@@ -37,12 +47,16 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
 
     app.switch_page("pages/dataset_dashboard.py").run(timeout=90)
     assert not app.exception
-    displayed_metrics = {metric.label: metric.value for metric in app.metric}
-    assert displayed_metrics["Master samples"] == "44,717"
-    assert displayed_metrics["English training samples"] == "42,112"
-    assert displayed_metrics["Translated Vietnamese training samples"] == "2,605"
-    assert displayed_metrics["Review rows"] == "1,330"
-    assert displayed_metrics["Cross-split leakage check"] == "PASSED"
+    if all(path.exists() for path in DATASET_DASHBOARD_ARTIFACTS):
+        displayed_metrics = {metric.label: metric.value for metric in app.metric}
+        assert displayed_metrics["Master samples"] == "44,717"
+        assert displayed_metrics["English training samples"] == "42,112"
+        assert displayed_metrics["Translated Vietnamese training samples"] == "2,605"
+        assert displayed_metrics["Review rows"] == "1,330"
+        assert displayed_metrics["Cross-split leakage check"] == "PASSED"
+    else:
+        assert app.warning
+        assert any("not available" in warning.value.casefold() for warning in app.warning)
 
     app.switch_page("pages/methodology.py").run(timeout=90)
     assert not app.exception

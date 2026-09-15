@@ -23,6 +23,25 @@ from vietmailguard.file_utils import sha256_file
 ROOT = Path(__file__).resolve().parents[1]
 V2_RESULTS = ROOT / "results" / "v2_bilingual"
 V2_MODEL = ROOT / "models" / "v2_bilingual"
+RAW_AUDIT_ARTIFACTS = [
+    ROOT / "reports" / "dataset_audit.csv",
+    ROOT / "reports" / "v2" / "vietnamese_dataset_audit.md",
+] + [
+    ROOT / "data" / "raw" / filename
+    for filename in (
+        "CEAS_08.csv",
+        "Enron.csv",
+        "Ling.csv",
+        "Nazario.csv",
+        "Nigerian_Fraud.csv",
+        "SpamAssasin.csv",
+        "data_vi.csv",
+    )
+]
+V2_SPLIT_ARTIFACTS = [
+    ROOT / "data" / "splits" / "v2" / f"{name}.csv"
+    for name in ("train", "validation", "test")
+]
 SPLIT_COLUMNS = [
     "id",
     "parent_id",
@@ -57,6 +76,10 @@ def actual_splits() -> dict[str, pd.DataFrame]:
     }
 
 
+@pytest.mark.skipif(
+    not all(path.exists() for path in RAW_AUDIT_ARTIFACTS),
+    reason="raw datasets and generated audit files are local-only artifacts",
+)
 def test_raw_files_match_saved_audit_hashes() -> None:
     english_audit = pd.read_csv(ROOT / "reports" / "dataset_audit.csv", dtype=str)
     for row in english_audit.itertuples(index=False):
@@ -70,6 +93,10 @@ def test_raw_files_match_saved_audit_hashes() -> None:
     assert sha256_file(ROOT / "data" / "raw" / "data_vi.csv") == match.group(1)
 
 
+@pytest.mark.skipif(
+    not all(path.exists() for path in V2_SPLIT_ARTIFACTS),
+    reason="generated V2 split datasets are local-only artifacts",
+)
 def test_actual_v2_splits_preserve_eligibility_provenance_and_origin(
     actual_splits: dict[str, pd.DataFrame],
 ) -> None:
@@ -161,6 +188,7 @@ def test_frozen_metrics_recompute_and_agree_across_artifacts() -> None:
     ]
 
 
+@pytest.mark.production_artifact
 def test_one_shot_selection_and_production_hash_contract() -> None:
     frozen = json.loads((ROOT / "config" / "v2_production_frozen.json").read_text("utf-8"))
     final = json.loads((V2_RESULTS / "final_test_metrics.json").read_text("utf-8"))

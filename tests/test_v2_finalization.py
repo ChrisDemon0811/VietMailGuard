@@ -155,6 +155,15 @@ def test_one_shot_guard_refuses_started_or_completed_evaluation(tmp_path: Path) 
         assert_one_shot_not_started(guard)
 
 
+@pytest.mark.skipif(
+    not (
+        PROJECT_ROOT
+        / "results"
+        / "v2_bilingual"
+        / "tfidf_validation_metrics.json"
+    ).exists(),
+    reason="full generated validation metrics are not distributed with a clean clone",
+)
 def test_frozen_config_matches_saved_validation_winner() -> None:
     frozen = json.loads(FROZEN_CONFIG.read_text(encoding="utf-8"))
     validation = json.loads(

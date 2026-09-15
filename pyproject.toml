@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vietmailguard"
-version = "0.1.0"
-description = "English email threat detection with a bilingual English/Vietnamese interface"
+version = "2.0.0"
+description = "Bilingual English/Vietnamese email classification and security analysis system"
+readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["dependencies"]
 
@@ -18,4 +19,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
-
+markers = [
+    "production_artifact: requires the frozen models/v2_bilingual/production_pipeline.joblib release artifact",
+]

@@ -1,11 +1,22 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from vietmailguard.spam_curation import content_digest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+LOCAL_BASELINE_ARTIFACTS = [
+    ROOT / "data" / "processed" / "baseline_eligibility.csv",
+    ROOT / "reports" / "spam_validation_sample.csv",
+    ROOT / "reports" / "baseline_sampling_manifest.csv",
+    ROOT / "reports" / "spam_curation_needs_human_review.csv",
+]
+pytestmark = pytest.mark.skipif(
+    not all(path.exists() for path in LOCAL_BASELINE_ARTIFACTS),
+    reason="local generated baseline artifacts are not distributed with a clean clone",
+)
 
 
 def test_baseline_eligibility_has_only_approved_provenance() -> None:

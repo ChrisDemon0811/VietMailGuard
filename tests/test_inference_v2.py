@@ -9,6 +9,7 @@ from vietmailguard.inference import INFERENCE_RESULT_FIELDS, load_inference_engi
 
 
 ROOT = Path(__file__).resolve().parents[1]
+pytestmark = pytest.mark.production_artifact
 
 
 @pytest.fixture(scope="module")

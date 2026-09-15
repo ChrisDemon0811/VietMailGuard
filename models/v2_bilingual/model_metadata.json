@@ -1,0 +1,514 @@
+{
+  "schema_version": 1,
+  "model_version": "2.0.0",
+  "artifact": "models/v2_bilingual/production_pipeline.joblib",
+  "artifact_sha256": "b2ebecf641f2a5fd3ce9f0d0680a90884850e46b59c48ce0ab5bd4fee64f87fa",
+  "classifier": "LinearSVC with sigmoid CalibratedClassifierCV",
+  "representation": "Word TF-IDF (1, 2)",
+  "embedding_model": null,
+  "preprocessing": {
+    "class": "vietmailguard.modeling.EmailTextComposer",
+    "subject_column": "subject",
+    "body_column": "body",
+    "separator": "\n"
+  },
+  "calibration": {
+    "wrapper": "CalibratedClassifierCV",
+    "method": "sigmoid",
+    "cv": "StratifiedGroupKFold",
+    "n_splits": 5,
+    "shuffle": true,
+    "random_state": 42,
+    "group_column": "final_group_id",
+    "ensemble": false,
+    "n_jobs": 1
+  },
+  "training_languages": [
+    "en",
+    "vi"
+  ],
+  "supported_content_languages": {
+    "en": {
+      "status": "supported",
+      "evaluation": "independent English test subset"
+    },
+    "vi": {
+      "status": "experimental",
+      "evaluation": "translated Vietnamese test subset only"
+    },
+    "mixed": {
+      "status": "experimental_not_independently_benchmarked"
+    }
+  },
+  "dataset_sources": [
+    "CEAS_08",
+    "Enron",
+    "Ling",
+    "Nazario",
+    "SpamAssassin",
+    "controlled_translation",
+    "data_vi"
+  ],
+  "training_data_origins": {
+    "original_english_artifact": 35587,
+    "translated": 2426
+  },
+  "class_names": [
+    "normal",
+    "spam",
+    "phishing"
+  ],
+  "training_rows": 38013,
+  "test_metrics": {
+    "accuracy": 0.9977625298329356,
+    "macro_precision": 0.9979915171182601,
+    "macro_recall": 0.9839916129266228,
+    "macro_f1": 0.9908998058833015,
+    "weighted_f1": 0.9977503698003827,
+    "per_class": {
+      "normal": {
+        "precision": 0.9977198697068403,
+        "recall": 0.9998367879875959,
+        "f1": 0.9987772071411103,
+        "support": 6127
+      },
+      "spam": {
+        "precision": 0.9962546816479401,
+        "recall": 0.981549815498155,
+        "f1": 0.9888475836431226,
+        "support": 271
+      },
+      "phishing": {
+        "precision": 1.0,
+        "recall": 0.9705882352941176,
+        "f1": 0.9850746268656716,
+        "support": 306
+      }
+    },
+    "confusion_matrix": [
+      [
+        6126,
+        1,
+        0
+      ],
+      [
+        5,
+        266,
+        0
+      ],
+      [
+        9,
+        0,
+        297
+      ]
+    ],
+    "confusion_matrix_label_order": [
+      "normal",
+      "spam",
+      "phishing"
+    ]
+  },
+  "test_subset_metrics": {
+    "combined": {
+      "rows": 6704,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977625298329356,
+      "macro_precision_supported_classes": 0.9979915171182601,
+      "macro_recall_supported_classes": 0.9839916129266228,
+      "macro_f1_supported_classes": 0.9908998058833015,
+      "three_class_macro_f1": 0.9908998058833015,
+      "per_class": {
+        "normal": {
+          "precision": 0.9977198697068403,
+          "recall": 0.9998367879875959,
+          "f1": 0.9987772071411103,
+          "support": 6127
+        },
+        "spam": {
+          "precision": 0.9962546816479401,
+          "recall": 0.981549815498155,
+          "f1": 0.9888475836431226,
+          "support": 271
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          6126,
+          1,
+          0
+        ],
+        [
+          5,
+          266,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9977503698003827
+    },
+    "english_test": {
+      "rows": 6525,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977011494252873,
+      "macro_precision_supported_classes": 0.9979311815465275,
+      "macro_recall_supported_classes": 0.9838029768439819,
+      "macro_f1_supported_classes": 0.9907741707856296,
+      "three_class_macro_f1": 0.9907741707856296,
+      "per_class": {
+        "normal": {
+          "precision": 0.9976545485005863,
+          "recall": 0.9998321020819342,
+          "f1": 0.9987421383647799,
+          "support": 5956
+        },
+        "spam": {
+          "precision": 0.9961389961389961,
+          "recall": 0.9809885931558935,
+          "f1": 0.9885057471264368,
+          "support": 263
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          5955,
+          1,
+          0
+        ],
+        [
+          5,
+          258,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9976885859641038
+    },
+    "translated_vietnamese_test": {
+      "rows": 179,
+      "supported_classes": [
+        "normal",
+        "spam"
+      ],
+      "accuracy": 1.0,
+      "macro_precision_supported_classes": 1.0,
+      "macro_recall_supported_classes": 1.0,
+      "macro_f1_supported_classes": 1.0,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 171
+        },
+        "spam": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 8
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          171,
+          0,
+          0
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 1.0
+    },
+    "original_english": {
+      "rows": 6525,
+      "supported_classes": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "accuracy": 0.9977011494252873,
+      "macro_precision_supported_classes": 0.9979311815465275,
+      "macro_recall_supported_classes": 0.9838029768439819,
+      "macro_f1_supported_classes": 0.9907741707856296,
+      "three_class_macro_f1": 0.9907741707856296,
+      "per_class": {
+        "normal": {
+          "precision": 0.9976545485005863,
+          "recall": 0.9998321020819342,
+          "f1": 0.9987421383647799,
+          "support": 5956
+        },
+        "spam": {
+          "precision": 0.9961389961389961,
+          "recall": 0.9809885931558935,
+          "f1": 0.9885057471264368,
+          "support": 263
+        },
+        "phishing": {
+          "precision": 1.0,
+          "recall": 0.9705882352941176,
+          "f1": 0.9850746268656716,
+          "support": 306
+        }
+      },
+      "confusion_matrix": [
+        [
+          5955,
+          1,
+          0
+        ],
+        [
+          5,
+          258,
+          0
+        ],
+        [
+          9,
+          0,
+          297
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 0.9976885859641038
+    },
+    "existing_translated_vietnamese": {
+      "rows": 179,
+      "supported_classes": [
+        "normal",
+        "spam"
+      ],
+      "accuracy": 1.0,
+      "macro_precision_supported_classes": 1.0,
+      "macro_recall_supported_classes": 1.0,
+      "macro_f1_supported_classes": 1.0,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 171
+        },
+        "spam": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 8
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          171,
+          0,
+          0
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": 1.0
+    },
+    "controlled_translation_augmentation_descendants": {
+      "rows": 0,
+      "supported_classes": [],
+      "accuracy": null,
+      "macro_precision_supported_classes": null,
+      "macro_recall_supported_classes": null,
+      "macro_f1_supported_classes": null,
+      "three_class_macro_f1": null,
+      "per_class": {
+        "normal": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        },
+        "spam": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        },
+        "phishing": {
+          "precision": null,
+          "recall": null,
+          "f1": null,
+          "support": 0
+        }
+      },
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "confusion_matrix_label_order": [
+        "normal",
+        "spam",
+        "phishing"
+      ],
+      "weighted_f1_supported_classes": null
+    }
+  },
+  "native_benchmark_status": "Native Vietnamese benchmark is not available.",
+  "limitations": [
+    "Vietnamese evaluation is translated, not native Vietnamese.",
+    "Translated Vietnamese test may lack one or more classes; absent metrics are N/A.",
+    "Phishing data remains source-concentrated.",
+    "Mixed-language content has not been independently benchmarked.",
+    "No post-test tuning or repeat held-out evaluation is allowed."
+  ],
+  "evaluated_at": "2026-09-14T14:45:36.799975+00:00",
+  "smoke_tests": [
+    {
+      "scenario": "English normal example",
+      "prediction": "normal",
+      "confidence": 0.9981856590120877,
+      "class_probabilities": {
+        "normal": 0.9981856590120877,
+        "phishing": 0.001771413200910351,
+        "spam": 4.292778700182557e-05
+      }
+    },
+    {
+      "scenario": "English spam example",
+      "prediction": "normal",
+      "confidence": 0.9981568238236966,
+      "class_probabilities": {
+        "normal": 0.9981568238236966,
+        "phishing": 0.00020359950078747337,
+        "spam": 0.0016395766755159605
+      }
+    },
+    {
+      "scenario": "English phishing example",
+      "prediction": "phishing",
+      "confidence": 0.9996379204894649,
+      "class_probabilities": {
+        "normal": 0.00034255144285334614,
+        "phishing": 0.9996379204894649,
+        "spam": 1.9528067681760265e-05
+      }
+    },
+    {
+      "scenario": "Vietnamese normal example",
+      "prediction": "normal",
+      "confidence": 0.999772044494485,
+      "class_probabilities": {
+        "normal": 0.999772044494485,
+        "phishing": 1.813901171193417e-05,
+        "spam": 0.00020981649380306364
+      }
+    },
+    {
+      "scenario": "Vietnamese spam-like example",
+      "prediction": "normal",
+      "confidence": 0.5035636607456143,
+      "class_probabilities": {
+        "normal": 0.5035636607456143,
+        "phishing": 0.00036584936949910646,
+        "spam": 0.49607048988488656
+      }
+    },
+    {
+      "scenario": "Vietnamese phishing-like example",
+      "prediction": "phishing",
+      "confidence": 0.9741603014805412,
+      "class_probabilities": {
+        "normal": 0.02583528451521213,
+        "phishing": 0.9741603014805412,
+        "spam": 4.414004246561144e-06
+      }
+    }
+  ]
+}

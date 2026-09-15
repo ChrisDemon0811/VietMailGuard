@@ -1,0 +1,4 @@
+actual\predicted,normal,spam,phishing
+normal,6126,1,0
+spam,5,266,0
+phishing,9,0,297

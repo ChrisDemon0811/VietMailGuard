@@ -30,10 +30,29 @@ data/cache/*
 !data/cache/.gitkeep
 models/*
 !models/.gitkeep
+!models/v2_bilingual/
+models/v2_bilingual/*
+!models/v2_bilingual/model_metadata.json
+
 results/*
 !results/.gitkeep
+!results/v2_bilingual/
+results/v2_bilingual/*
+!results/v2_bilingual/final_test_metrics.json
+!results/v2_bilingual/final_test_classification_report.csv
+!results/v2_bilingual/final_confusion_matrix.csv
+!results/v2_bilingual/tfidf_model_comparison.csv
+!results/v2_bilingual/multilingual_embedding_validation.csv
+
 reports/*
 !reports/.gitkeep
+!reports/dataset_license_audit.md
+!reports/repository_tracking_policy.md
+!reports/v2/
+reports/v2/*
+!reports/v2/model_selection_rationale.md
+!reports/v2/final_model_evaluation.md
+!reports/v2/version2_completion_report.md
 
 # Raw datasets are immutable local inputs. Keep only the directory marker.
 data/raw/*

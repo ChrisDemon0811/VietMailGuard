@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from vietmailguard.label_review import build_review_pool, load_review_config, triage_text
 
@@ -53,6 +54,10 @@ def test_phishing_signal_blocks_spam_proposal() -> None:
     assert result["proposed_label"] == "review"
 
 
+@pytest.mark.skipif(
+    not (ROOT / "reports" / "dataset_labels.csv").exists(),
+    reason="local generated dataset-label audit is not distributed with a clean clone",
+)
 def test_every_observed_raw_label_has_exactly_one_policy_status() -> None:
     datasets = json.loads((ROOT / "config" / "datasets.json").read_text(encoding="utf-8"))
     allowed = set(datasets["policy"]["raw_label_statuses"])
