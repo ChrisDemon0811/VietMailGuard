@@ -28,6 +28,8 @@ data/splits/*
 !data/splits/.gitkeep
 data/cache/*
 !data/cache/.gitkeep
+data/runtime/*
+!data/runtime/.gitkeep
 models/*
 !models/.gitkeep
 !models/v2_bilingual/

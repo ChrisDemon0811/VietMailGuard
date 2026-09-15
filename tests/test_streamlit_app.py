@@ -23,6 +23,10 @@ DATASET_DASHBOARD_ARTIFACTS = [
 def test_all_streamlit_pages_render_saved_artifacts() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=90).run()
     assert not app.exception
+    assert any("VietMailGuard Mail" in item.value for item in app.markdown)
+
+    app.switch_page("pages/email_analyzer.py").run(timeout=90)
+    assert not app.exception
     assert [button.label for button in app.button] == ["Analyze Email"]
 
     app.switch_page("pages/model_dashboard.py").run(timeout=90)
@@ -68,6 +72,7 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
 
 def test_language_switch_preserves_inference_result() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
+    app.switch_page("pages/email_analyzer.py").run(timeout=90)
     app.text_input[0].set_value("project.manager@example.org")
     app.text_input[1].set_value("Project meeting notes")
     app.text_area[0].set_value(
@@ -89,6 +94,7 @@ def test_language_switch_preserves_inference_result() -> None:
 
 def test_analyzer_shows_v2_metadata_and_separate_explanations() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
+    app.switch_page("pages/email_analyzer.py").run(timeout=90)
     app.text_input[1].set_value("Account alert")
     app.text_area[0].set_value(
         "Your account is locked. Verify your password at http://192.0.2.10/login."
@@ -165,6 +171,7 @@ def test_required_v2_ui_language_and_email_scenarios() -> None:
         ),
     ]
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
+    app.switch_page("pages/email_analyzer.py").run(timeout=90)
     for interface, subject, body, detected, prediction, action in scenarios:
         app.selectbox[0].set_value(interface).run(timeout=90)
         app.text_input[0].set_value("sender@example.com")
@@ -178,3 +185,27 @@ def test_required_v2_ui_language_and_email_scenarios() -> None:
             assert result["prediction"] == prediction
         if action is not None:
             assert result["recommended_action"] == action
+
+
+def test_mailbox_views_render_in_both_interface_languages() -> None:
+    labels = {
+        "hop_thu_den": ("Inbox", "Hộp thư đến"),
+        "gan_sao": ("Starred", "Gắn sao"),
+        "thu_rac": ("Spam", "Thư rác"),
+        "cach_ly": ("Quarantine", "Cách ly"),
+        "da_xoa": ("Deleted", "Đã xóa"),
+        "security": ("Security View", "Góc nhìn bảo mật"),
+    }
+    for view, (english_label, vietnamese_label) in labels.items():
+        app = AppTest.from_file(str(APP_PATH), default_timeout=90)
+        app.query_params["view"] = view
+        app.run(timeout=90)
+        assert not app.exception
+        assert any(english_label in item.value for item in app.markdown)
+
+        language_selector = next(
+            item for item in app.selectbox if item.key == "language_selector"
+        )
+        language_selector.set_value("vi").run(timeout=90)
+        assert not app.exception
+        assert any(vietnamese_label in item.value for item in app.markdown)

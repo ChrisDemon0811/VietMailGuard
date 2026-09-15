@@ -29,6 +29,8 @@ def _part_content(part: Message) -> str:
 
 def _html_to_text(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
+    for unsafe_element in soup.find_all(("script", "style", "noscript")):
+        unsafe_element.decompose()
     visible_text = soup.get_text(" ", strip=True)
     hrefs = [
         str(element.get("href")).strip()

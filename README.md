@@ -49,6 +49,47 @@ Production configuration:
 - Model Confidence comes from calibrated `predict_proba`; raw SVM decision scores are not shown as probability.
 - Overall Risk Score is a separate configurable decision-support heuristic. Security rules never overwrite the ML prediction.
 
+### VietMailGuard Mail local client
+
+VietMailGuard Mail is the primary local mailbox workflow. It reuses the frozen
+inference layer and keeps SQL outside Streamlit:
+
+```text
+Email / .eml import
+        -> frozen ML + security/risk analysis
+        -> prediction-based routing
+        -> SQLite persistence
+        -> Inbox / Spam / Quarantine mailbox
+```
+
+The concrete software boundary is:
+
+```text
+Streamlit -> MailService -> MailRepository / frozen inference -> SQLite
+```
+
+Folders have distinct, reversible meanings:
+
+- **Inbox** (`hop_thu_den`): messages predicted `normal`. A security disagreement can add a warning or `REVIEW` recommendation without silently changing the ML class or folder.
+- **Spam** (`thu_rac`): messages predicted `spam`. Users can use **Not spam** to restore a message while preserving its original analysis.
+- **Quarantine** (`cach_ly`): messages predicted `phishing`. Quarantine is protective isolation, **not deletion**; messages remain available for review and recovery.
+- **Deleted** (`da_xoa`): a user-controlled mailbox state. VietMailGuard never automatically deletes spam or phishing messages.
+
+Search covers sender, subject, and plain body text. Filters cover folder,
+read/star state, prediction, risk level, and detected language. Security View
+uses persisted analysis and sorts by risk; rendering a mailbox list never runs
+inference again. Imported HTML is converted to plain text, remote images are not
+loaded, links are not opened automatically, and attachments are not claimed as
+malware-scanned.
+
+The reproducible seed contains demonstration messages only. They are not an
+evaluation dataset and their predictions are not scientific metrics:
+
+```bat
+python scripts\seed_demo_mailbox.py
+python -m streamlit run app\app.py
+```
+
 ### Scientific data pipeline
 
 ```text
@@ -193,6 +234,16 @@ The robustness command does not train or modify the production model. Its metric
 10. Launch the web application and run tests:
 
 ```bat
+python run.py
+```
+
+The launcher above is equivalent to the direct Streamlit command and safely
+handles project paths containing spaces or Unicode characters. Optional
+Streamlit arguments can be appended, for example `python run.py --server.port 8502`.
+
+Direct command and tests:
+
+```bat
 python -m streamlit run app\app.py
 python -m pytest -q
 ```
@@ -271,6 +322,45 @@ Dataset tiếng Anh + tiếng Việt được dịch
 
 Production dùng Word TF-IDF `(1,2)` và LinearSVC đã sigmoid-calibrate bằng `CalibratedClassifierCV` với `StratifiedGroupKFold` 5 fold theo `final_group_id`. `Model Confidence` lấy từ `predict_proba`. `Overall Risk Score` là heuristic hỗ trợ quyết định độc lập 0–100; đây không phải xác suất mô hình. Rule bảo mật không âm thầm đổi prediction của classifier.
 
+### VietMailGuard Mail — hộp thư cục bộ
+
+VietMailGuard Mail là luồng sử dụng chính ở máy cá nhân. Streamlit không chạy
+SQL hay gọi classifier trực tiếp:
+
+```text
+Email / file .eml
+-> ML đã đóng băng + phân tích security/risk
+-> định tuyến theo prediction
+-> lưu SQLite
+-> Hộp thư đến / Thư rác / Cách ly
+```
+
+Ranh giới phần mềm là:
+
+```text
+Streamlit -> MailService -> MailRepository / frozen inference -> SQLite
+```
+
+- **Hộp thư đến** (`hop_thu_den`) nhận email được ML dự đoán `normal`. Dấu hiệu bảo mật vẫn có thể tạo cảnh báo hoặc khuyến nghị `REVIEW` nhưng không âm thầm đổi prediction.
+- **Thư rác** (`thu_rac`) nhận email được dự đoán `spam`. Người dùng có thể chọn **Không phải thư rác** mà không sửa lịch sử ML.
+- **Cách ly** (`cach_ly`) nhận email được dự đoán `phishing`. Cách ly **không phải xóa**; email vẫn được giữ để kiểm tra hoặc khôi phục.
+- **Đã xóa** (`da_xoa`) chỉ thay đổi bởi thao tác người dùng. Hệ thống không tự động xóa spam hoặc phishing.
+
+Tìm kiếm áp dụng cho người gửi, tiêu đề và plain-text body; bộ lọc hỗ trợ thư
+mục, trạng thái đọc/gắn sao, prediction, risk level và ngôn ngữ phát hiện.
+Security View đọc analysis đã lưu và sắp xếp theo rủi ro, không chạy inference
+lại khi render danh sách. HTML được chuyển thành plain text, ảnh từ xa không
+được tải, URL không tự mở và hệ thống không tuyên bố đã quét malware trong file
+đính kèm.
+
+Các email do script seed tạo chỉ dùng để trình diễn giao diện, không phải dữ
+liệu evaluation và không tạo metric khoa học:
+
+```bat
+python scripts\seed_demo_mailbox.py
+python -m streamlit run app\app.py
+```
+
 ### Chạy trên Windows CMD
 
 ```bat
@@ -310,6 +400,16 @@ Kiểm tra inference, robustness, web và test:
 ```bat
 python scripts\smoke_inference_v2.py
 python scripts\evaluate_v2_robustness.py
+python run.py
+```
+
+`python run.py` tự dùng đúng Python đang active và xử lý an toàn project path
+có khoảng trắng hoặc ký tự Unicode. Có thể truyền thêm tham số Streamlit, ví dụ
+`python run.py --server.port 8502`.
+
+Lệnh Streamlit trực tiếp và pytest:
+
+```bat
 python -m streamlit run app\app.py
 python -m pytest -q
 ```

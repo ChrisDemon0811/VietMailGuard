@@ -2299,5 +2299,670 @@ Model selection priority for Version 2:
 A model with slightly higher overall Accuracy must not automatically win if it
 has materially worse phishing recall or severe language imbalance.
 
+# 68. VietMailGuard Mail Client
+
+VietMailGuard Version 2 production classifier is frozen.
+
+The next application layer turns VietMailGuard from a copy/paste analyzer into
+a local email-security client.
+
+This work MUST NOT retrain or modify the frozen Version 2 classifier.
+
+The mailbox layer sits above:
+
+Frozen ML Model
+→ Security Analysis
+→ Risk Engine
+→ Mail Routing
+→ SQLite
+→ Streamlit Mail Client
+
+---
+
+# 69. Product Identity
+
+The application is called:
+
+`VietMailGuard Mail`
+
+It may use a familiar three-pane webmail layout inspired by modern email clients,
+but must not copy Gmail branding, logos, trademarks, or claim to be Gmail.
+
+Preferred product description:
+
+`AI-Powered Bilingual Email Security Client`
+
+---
+
+# 70. Mailbox Scope
+
+Version 2 Mail Client initially operates locally.
+
+Supported input sources:
+
+1. seeded demonstration emails
+2. imported `.eml` files
+3. existing VietMailGuard analyzer input where useful
+
+Do NOT integrate Gmail API, OAuth, IMAP, or real external mail accounts in this
+phase unless explicitly requested later.
+
+The local mailbox must be stable before external-account integration.
+
+---
+
+# 71. SQLite Naming Convention
+
+ALL SQLite table names and column names must use Vietnamese without diacritics.
+
+Use:
+
+- lowercase
+- snake_case
+- ASCII only
+- meaningful Vietnamese names
+
+Examples:
+
+GOOD:
+
+`thu`
+`phan_tich_thu`
+`phan_hoi_nguoi_dung`
+`lich_su_thu_muc`
+
+`id_thu`
+`nguoi_gui`
+`nguoi_nhan`
+`tieu_de`
+`noi_dung`
+`ngay_gui`
+`thu_muc`
+`da_doc`
+`da_gan_sao`
+`diem_rui_ro`
+
+BAD:
+
+`emails`
+`sender`
+`subject`
+`risk_score`
+
+BAD:
+
+`người_gửi`
+`tiêu_đề`
+
+Vietnamese diacritics must not appear in SQL identifiers.
+
+Python module/class/function names may remain English when that matches the
+existing codebase.
+
+---
+
+# 72. SQLite Database Location
+
+Runtime database:
+
+`data/runtime/vietmailguard_mail.db`
+
+The runtime database must NOT be committed to Git.
+
+Add:
+
+`data/runtime/*`
+
+to `.gitignore`, while preserving a `.gitkeep` if useful.
+
+Database creation must be reproducible from migration/schema code.
+
+---
+
+# 73. Core SQLite Schema
+
+The initial schema should contain at least the following tables.
+
+## Table: `thu`
+
+Recommended fields:
+
+- `id_thu`
+- `ma_thu_ngoai`
+- `nguoi_gui`
+- `nguoi_nhan`
+- `cc`
+- `tieu_de`
+- `noi_dung`
+- `noi_dung_html`
+- `ngay_gui`
+- `thu_muc`
+- `da_doc`
+- `da_gan_sao`
+- `nguon`
+- `ma_nguon`
+- `thoi_gian_tao`
+- `thoi_gian_cap_nhat`
+
+Primary key:
+
+`id_thu`
+
+Allowed internal folder values:
+
+- `hop_thu_den`
+- `thu_rac`
+- `cach_ly`
+- `da_xoa`
+
+Do not use localized display strings as database state.
+
+---
+
+## Table: `phan_tich_thu`
+
+Recommended fields:
+
+- `id_phan_tich`
+- `id_thu`
+- `phien_ban_mo_hinh`
+- `ngon_ngu_phat_hien`
+- `nhan_du_doan`
+- `do_tin_cay`
+- `diem_rui_ro`
+- `muc_rui_ro`
+- `hanh_dong_goc`
+- `hanh_dong_de_xuat`
+- `co_canh_bao`
+- `so_phat_hien_bao_mat`
+- `ket_qua_json`
+- `thoi_gian_phan_tich`
+
+`nhan_du_doan` must preserve the frozen ML internal classes:
+
+- `normal`
+- `spam`
+- `phishing`
+
+Do NOT translate these database values.
+
+---
+
+## Table: `phan_hoi_nguoi_dung`
+
+Recommended fields:
+
+- `id_phan_hoi`
+- `id_thu`
+- `nhan_du_doan_ban_dau`
+- `thu_muc_truoc`
+- `thu_muc_sau`
+- `hanh_dong_nguoi_dung`
+- `ghi_chu`
+- `thoi_gian_phan_hoi`
+
+Examples of user actions:
+
+- `khong_phai_thu_rac`
+- `danh_dau_thu_rac`
+- `bao_cao_lua_dao`
+- `chuyen_vao_hop_thu_den`
+- `chuyen_vao_cach_ly`
+- `xoa`
+
+User feedback must NOT automatically retrain the production model.
+
+---
+
+## Table: `lich_su_thu_muc`
+
+Recommended fields:
+
+- `id_lich_su`
+- `id_thu`
+- `thu_muc_cu`
+- `thu_muc_moi`
+- `ly_do`
+- `thoi_gian_thay_doi`
+
+This provides an auditable routing history.
+
+---
+
+# 74. SQLite Integrity
+
+Enable:
+
+`PRAGMA foreign_keys = ON`
+
+Use transactions for:
+
+- importing email
+- analysis
+- routing
+- moving messages
+
+Add appropriate indexes, including where useful:
+
+- `thu(thu_muc, ngay_gui)`
+- `thu(da_doc)`
+- `thu(da_gan_sao)`
+- `phan_tich_thu(id_thu)`
+- `phan_tich_thu(diem_rui_ro)`
+- `phan_tich_thu(nhan_du_doan)`
+
+Avoid unnecessary denormalization.
+
+---
+
+# 75. Automatic Mail Routing
+
+Automatic routing is based on the frozen ML prediction.
+
+Default routing:
+
+`normal`
+→ `hop_thu_den`
+
+`spam`
+→ `thu_rac`
+
+`phishing`
+→ `cach_ly`
+
+Do NOT automatically delete phishing or spam.
+
+---
+
+# 76. Security Disagreement Policy
+
+Security rules must never silently rewrite the ML class.
+
+Example:
+
+ML prediction:
+
+`normal`
+
+Security engine:
+
+promotional indicators detected
+
+Result:
+
+- `nhan_du_doan = normal`
+- `thu_muc = hop_thu_den`
+- `co_canh_bao = true`
+- recommendation may be `REVIEW`
+
+The UI must display the disagreement.
+
+---
+
+# 77. Phishing User Experience
+
+A phishing prediction must:
+
+1. route the email to `cach_ly`
+2. display a prominent warning banner
+3. show Risk Score
+4. show relevant security indicators
+5. show suspicious URL findings
+6. recommend avoiding links and credential entry
+
+Never claim a URL is definitively malicious based only on offline heuristics.
+
+Use wording such as:
+
+`suspicious indicator`
+
+---
+
+# 78. Spam User Experience
+
+Spam prediction:
+
+- automatically routes to `thu_rac`
+- remains recoverable
+- supports `Khong phai thu rac`
+- keeps original ML prediction for audit history
+
+Moving the message back to Inbox must not rewrite historical model output.
+
+---
+
+# 79. Mail Client Layout
+
+Preferred Streamlit layout:
+
+Left sidebar:
+- Hop thu den
+- Gan sao
+- Thu rac
+- Cach ly
+- Da xoa
+- Security View
+
+Center:
+- message list
+
+Right:
+- selected email content
+- VietMailGuard analysis
+
+Do not reproduce Gmail branding exactly.
+
+---
+
+# 80. Mail List
+
+Each mail-list item should show when practical:
+
+- sender
+- subject
+- preview
+- date/time
+- unread/read status
+- star status
+- prediction indicator
+- risk indicator
+
+Avoid overwhelming the list with every security detail.
+
+---
+
+# 81. Mail Detail
+
+The selected email should show:
+
+- sender
+- recipient
+- date
+- subject
+- body
+
+Then a clearly separated:
+
+`VietMailGuard Security Analysis`
+
+showing:
+
+- prediction
+- calibrated confidence
+- Risk Score
+- Risk Level
+- recommended action
+- model explanation
+- content findings
+- sender findings
+- URL findings
+- support/limitation notices
+
+---
+
+# 82. HTML Email Safety
+
+Never render arbitrary email HTML directly with unrestricted
+`unsafe_allow_html=True`.
+
+Email HTML may contain unsafe or tracking content.
+
+Preferred behavior:
+
+- display sanitized/plain-text body
+- extract links separately
+- do not execute scripts
+- do not load remote images automatically
+- do not execute embedded content
+
+Remote images should remain disabled in the first mailbox version.
+
+---
+
+# 83. Attachments
+
+The current VietMailGuard system is NOT a malware attachment scanner.
+
+If attachments are shown:
+
+- display metadata only
+- filename
+- MIME type
+- size where available
+
+Do not claim attachments were scanned for malware.
+
+Do not automatically execute/open attachments.
+
+---
+
+# 84. Importing `.eml`
+
+Imported `.eml` files must use the existing parser where possible.
+
+Import flow:
+
+`.eml`
+→ parse
+→ store email
+→ frozen inference
+→ security/risk analysis
+→ route
+→ save analysis
+→ show in mailbox
+
+Duplicate imports should be detected when practical.
+
+Do not create duplicate mailbox rows every time the same `.eml` is imported.
+
+---
+
+# 85. Demo Seed Emails
+
+Provide a reproducible seed dataset for UI demonstration.
+
+Seed examples should cover:
+
+- normal English
+- spam English
+- phishing English
+- normal Vietnamese
+- spam-like Vietnamese
+- phishing-like Vietnamese
+- mixed language
+- short promotional email
+
+These are DEMO emails.
+
+They are not evaluation data.
+
+Do not report seed behavior as scientific metrics.
+
+---
+
+# 86. Mail Service Layer
+
+Streamlit must NOT execute SQL directly throughout UI pages.
+
+Create a service/repository layer such as:
+
+`mail_repository.py`
+`mail_service.py`
+`mail_router.py`
+
+Preferred architecture:
+
+Streamlit
+→ MailService
+→ Repository / Inference
+→ SQLite
+
+---
+
+# 87. Inference Reuse
+
+There must be only one production inference implementation.
+
+Reuse:
+
+`vietmailguard.inference`
+
+Do not duplicate:
+
+- TF-IDF
+- classifier logic
+- URL analyzer
+- Risk Engine
+- language detector
+
+in mailbox code.
+
+---
+
+# 88. Analysis Persistence
+
+Store the analysis output used when the email entered the mailbox.
+
+This allows historical review even if future model versions change.
+
+Store:
+
+- model version
+- prediction
+- confidence
+- risk
+- language
+- recommendation
+- security result JSON
+- analysis timestamp
+
+Do not silently recompute old mail with a new model and overwrite history.
+
+---
+
+# 89. Reanalysis Policy
+
+If manual reanalysis is added later:
+
+create a new analysis record or preserve previous history.
+
+Never destroy historical predictions silently.
+
+---
+
+# 90. User Feedback
+
+Actions such as:
+
+- Not Spam
+- Mark as Spam
+- Report Phishing
+- Move to Inbox
+
+affect mailbox state.
+
+They do NOT change frozen model weights.
+
+Store feedback for future Version 2.1 research.
+
+---
+
+# 91. Search and Filtering
+
+Mailbox search should support at minimum:
+
+- sender
+- subject
+- body text where practical
+
+Filters may include:
+
+- folder
+- unread
+- starred
+- prediction
+- risk level
+
+Use parameterized SQL.
+
+Never build SQL by concatenating untrusted user input.
+
+---
+
+# 92. Security View
+
+Add a dedicated `Security View`.
+
+It may sort/filter mail by:
+
+- CRITICAL
+- HIGH
+- MEDIUM
+- LOW
+
+Show:
+
+- email
+- ML prediction
+- confidence
+- risk score
+- number of findings
+- folder
+
+This is a view of stored analysis.
+
+It must not create new scientific metrics.
+
+---
+
+# 93. Existing Quick Analyzer
+
+Do not delete the existing Email Analyzer.
+
+It may remain as:
+
+`Quick Analyzer`
+
+or an advanced/debug page.
+
+The Mail Client becomes the main user-facing workflow.
+
+---
+
+# 94. No External Gmail Yet
+
+Do not implement Gmail OAuth/API in this phase.
+
+Future integration may be:
+
+Gmail API
+→ fetch
+→ local VietMailGuard analysis
+→ labels/actions
+
+But it requires a separate privacy and permission design.
+
+---
+
+# 95. Mail Client Definition of Done
+
+The local mail client is complete only when:
+
+- SQLite schema exists
+- migrations/schema initialization works
+- Vietnamese-no-diacritic SQL naming policy is followed
+- seeded demo mailbox works
+- `.eml` import works
+- emails automatically route to Inbox/Spam/Quarantine
+- phishing warning works
+- spam recovery works
+- model/security disagreement is visible
+- mailbox state persists after restart
+- user feedback persists
+- security view works
+- existing production inference remains frozen
+- old Quick Analyzer still works
+- tests pass
+
 
 luôn luôn trả lời bằng tiếng Việt

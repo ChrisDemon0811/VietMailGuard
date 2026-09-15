@@ -20,8 +20,8 @@ def test_english_and_vietnamese_catalogs_have_the_same_keys() -> None:
 
 
 def test_required_translation_values_are_available() -> None:
-    assert t("email_analyzer_title", "en") == "Email Analyzer"
-    assert t("email_analyzer_title", "vi") == "Phân tích Email"
+    assert t("email_analyzer_title", "en") == "Quick Analyzer"
+    assert t("email_analyzer_title", "vi") == "Phân tích nhanh"
     assert class_label("phishing", "en") == "Phishing"
     assert class_label("phishing", "vi") == "Lừa đảo"
     assert action_label("QUARANTINE", "vi") == "Cách ly Email"
@@ -34,7 +34,7 @@ def test_required_translation_values_are_available() -> None:
 
 def test_missing_translation_key_falls_back_safely() -> None:
     assert t("key_that_does_not_exist", "vi") == "key_that_does_not_exist"
-    assert t("email_analyzer_title", "unsupported") == "Email Analyzer"
+    assert t("email_analyzer_title", "unsupported") == "Quick Analyzer"
 
 
 def test_localizing_result_does_not_change_internal_prediction() -> None:

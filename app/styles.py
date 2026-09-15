@@ -18,7 +18,7 @@ def apply_global_styles() -> None:
             --vmg-border: rgba(100, 116, 139, 0.28);
         }
         .block-container {
-            max-width: 1180px;
+            max-width: 1440px;
             padding-top: 2.25rem;
             padding-bottom: 3rem;
         }
@@ -80,6 +80,37 @@ def apply_global_styles() -> None:
             margin: 0.35rem 0;
             background: rgba(37, 99, 235, 0.045);
             border-radius: 0 8px 8px 0;
+        }
+        .vmg-mail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            border-bottom: 1px solid var(--vmg-border);
+            margin-bottom: 0.35rem;
+            padding-bottom: 0.65rem;
+        }
+        .vmg-mail-header h1 {
+            margin: 0.1rem 0 0.2rem 0;
+            font-size: 1.85rem;
+        }
+        .vmg-mail-header p {
+            color: var(--vmg-muted);
+            margin: 0;
+        }
+        .vmg-mail-badge {
+            display: inline-flex;
+            border-radius: 999px;
+            border: 1px solid currentColor;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            padding: 0.2rem 0.45rem;
+        }
+        [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] {
+            box-shadow: none;
+        }
+        [data-testid="stMainBlockContainer"] button[kind="tertiary"] {
+            text-align: left;
         }
         @media (max-width: 760px) {
             .block-container { padding-top: 1.25rem; }
