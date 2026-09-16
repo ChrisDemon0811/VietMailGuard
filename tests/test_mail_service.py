@@ -394,3 +394,42 @@ def test_restart_preserves_complete_mailbox_state_without_reanalysis(
         "thu_rac",
         "hop_thu_den",
     ]
+
+
+@pytest.mark.parametrize(
+    ("prediction", "folder"),
+    [
+        ("normal", "hop_thu_den"),
+        ("spam", "thu_rac"),
+        ("phishing", "cach_ly"),
+    ],
+)
+def test_open_email_is_folder_independent_and_never_moves_message(
+    service_factory,
+    prediction: str,
+    folder: str,
+) -> None:
+    service = service_factory(_analysis(prediction))
+    received = service.receive_email(subject=f"{folder} message", body="Stored body")
+    email_id = int(received["email"]["id"])
+
+    opened = service.open_email(email_id)
+
+    assert opened["email"]["id"] == email_id
+    assert opened["email"]["folder"] == folder
+    assert opened["email"]["is_read"] is True
+    assert opened["analysis"]["prediction"] == prediction
+    assert service.repository.get_email(email_id)["folder"] == folder
+
+
+def test_trash_email_can_open_without_being_moved(service_factory) -> None:
+    service = service_factory(_analysis("normal"))
+    received = service.receive_email(subject="Deleted message", body="Stored body")
+    email_id = int(received["email"]["id"])
+    service.move_email(email_id, "da_xoa")
+
+    opened = service.open_email(email_id)
+
+    assert opened["email"]["id"] == email_id
+    assert opened["email"]["folder"] == "da_xoa"
+    assert opened["analysis"]["prediction"] == "normal"

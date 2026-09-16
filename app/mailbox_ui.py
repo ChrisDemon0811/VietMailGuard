@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Mapping
+from typing import Any, Mapping, MutableMapping
 
 
 MAILBOX_VIEWS = (
@@ -14,6 +14,8 @@ MAILBOX_VIEWS = (
     "da_xoa",
     "security",
 )
+
+MAILBOX_MODES = ("list", "detail")
 
 FOLDER_VIEW_KEYS = {
     "hop_thu_den": "folder_inbox",
@@ -30,6 +32,86 @@ def normalize_mailbox_view(value: object) -> str:
 
     candidate = str(value or "")
     return candidate if candidate in MAILBOX_VIEWS else "hop_thu_den"
+
+
+def resolve_mailbox_view(
+    requested_view: object,
+    state: Mapping[str, Any],
+) -> str:
+    """Resolve a view while tolerating query parameters lost by page reruns."""
+
+    candidate = str(requested_view or "")
+    if candidate in MAILBOX_VIEWS:
+        return candidate
+    return normalize_mailbox_view(state.get("mailbox_current_view"))
+
+
+def resolve_mailbox_mode(
+    requested_mode: object,
+    state: Mapping[str, Any],
+) -> str:
+    """Resolve list/detail mode with session state as the durable fallback."""
+
+    candidate = str(requested_mode or "")
+    if candidate in MAILBOX_MODES:
+        return candidate
+    stored = str(state.get("mailbox_mode") or "")
+    return stored if stored in MAILBOX_MODES else "list"
+
+
+def sync_mailbox_navigation(
+    state: MutableMapping[str, Any],
+    current_view: object,
+    requested_mode: object = None,
+) -> str:
+    """Synchronize explicit list/detail state with safe query parameters."""
+
+    view = normalize_mailbox_view(current_view)
+    requested = str(requested_mode or "")
+    previous_view = state.get("mailbox_current_view")
+    state["mailbox_current_view"] = view
+
+    if previous_view != view and requested != "detail":
+        state["mailbox_return_view"] = view
+        state["mailbox_mode"] = "list"
+
+    if requested == "list":
+        state["mailbox_mode"] = "list"
+        state["mailbox_return_view"] = view
+    elif requested == "detail" and state.get("mailbox_selected_id") is not None:
+        state["mailbox_mode"] = "detail"
+    elif state.get("mailbox_mode") not in MAILBOX_MODES:
+        state["mailbox_mode"] = "list"
+
+    if state["mailbox_mode"] == "detail" and state.get("mailbox_selected_id") is None:
+        state["mailbox_mode"] = "list"
+    state.setdefault("mailbox_return_view", view)
+    return str(state["mailbox_mode"])
+
+
+def select_mailbox_message(
+    state: MutableMapping[str, Any],
+    email_id: int,
+    current_view: object,
+) -> None:
+    """Transition from a mailbox list to one directly addressable detail view."""
+
+    view = normalize_mailbox_view(current_view)
+    state["mailbox_selected_id"] = int(email_id)
+    state["mailbox_current_view"] = view
+    state["mailbox_return_view"] = view
+    state["mailbox_mode"] = "detail"
+
+
+def return_to_mailbox_list(state: MutableMapping[str, Any]) -> str:
+    """Return to the originating view without discarding the selected id."""
+
+    view = normalize_mailbox_view(
+        state.get("mailbox_return_view", state.get("mailbox_current_view"))
+    )
+    state["mailbox_current_view"] = view
+    state["mailbox_mode"] = "list"
+    return view
 
 
 def message_preview(value: object, *, maximum: int = 105) -> str:

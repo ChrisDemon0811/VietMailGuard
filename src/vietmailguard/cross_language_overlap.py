@@ -111,11 +111,11 @@ def extract_loose_emails(text: object) -> frozenset[str]:
     """Extract standard and whitespace-obfuscated email addresses."""
     if pd.isna(text):
         return frozenset()
-    emails = {
-        f"{re.sub(r'\s+', '', match.group(1)).casefold()}@"
-        f"{re.sub(r'\s+', '', match.group(2)).casefold()}"
-        for match in LOOSE_EMAIL_PATTERN.finditer(str(text))
-    }
+    emails: set[str] = set()
+    for match in LOOSE_EMAIL_PATTERN.finditer(str(text)):
+        local_part = re.sub(r"\s+", "", match.group(1)).casefold()
+        domain_part = re.sub(r"\s+", "", match.group(2)).casefold()
+        emails.add(f"{local_part}@{domain_part}")
     return frozenset(email for email in emails if len(email) >= 6)
 
 

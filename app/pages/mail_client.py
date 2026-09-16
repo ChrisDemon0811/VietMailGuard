@@ -1,4 +1,4 @@
-"""Three-area local mailbox UI backed exclusively by MailService."""
+"""Full-width list/detail local mailbox UI backed exclusively by MailService."""
 
 from __future__ import annotations
 
@@ -13,7 +13,11 @@ from mailbox_ui import (
     FOLDER_VIEW_KEYS,
     display_timestamp,
     message_preview,
-    normalize_mailbox_view,
+    resolve_mailbox_mode,
+    resolve_mailbox_view,
+    return_to_mailbox_list,
+    select_mailbox_message,
+    sync_mailbox_navigation,
 )
 from vietmailguard.mail_database import DEFAULT_DATABASE_PATH
 from vietmailguard.mail_service import MailService
@@ -27,7 +31,29 @@ def _language() -> str:
 
 
 def _view_from_query() -> str:
-    return normalize_mailbox_view(st.query_params.get("view", "hop_thu_den"))
+    return resolve_mailbox_view(
+        st.query_params.get("view"),
+        st.session_state,
+    )
+
+
+def _mode_from_query() -> str:
+    return resolve_mailbox_mode(
+        st.query_params.get("mode"),
+        st.session_state,
+    )
+
+
+def _open_detail(email_id: int, view: str) -> None:
+    select_mailbox_message(st.session_state, email_id, view)
+    st.query_params.update({"view": view, "mode": "detail"})
+    st.rerun()
+
+
+def _back_to_list() -> None:
+    view = return_to_mailbox_list(st.session_state)
+    st.query_params.update({"view": view, "mode": "list"})
+    st.rerun()
 
 
 def _messages_for_view(
@@ -50,29 +76,9 @@ def _messages_for_view(
 def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bool]:
     """Return validated UI filter values; repository performs all SQL filtering."""
 
-    with st.expander(t("mail_filters", language), expanded=view == "security"):
-        columns = st.columns(6)
-        if view in FOLDER_VIEWS:
-            folder = columns[0].selectbox(
-                t("filter_folder", language),
-                options=[view],
-                format_func=lambda value: t(FOLDER_VIEW_KEYS[value], language),
-                disabled=True,
-                key=f"mail_filter_folder_{view}",
-            )
-        else:
-            folder = columns[0].selectbox(
-                t("filter_folder", language),
-                options=[""] + sorted(FOLDER_VIEWS),
-                format_func=lambda value: (
-                    t("filter_all", language)
-                    if not value
-                    else t(FOLDER_VIEW_KEYS[value], language)
-                ),
-                key=f"mail_filter_folder_{view}",
-            )
-
-        read_choice = columns[1].selectbox(
+    with st.expander(t("mail_filters", language), expanded=False):
+        columns = st.columns(5)
+        read_choice = columns[0].selectbox(
             t("filter_read_state", language),
             options=["all", "unread", "read"],
             format_func=lambda value: {
@@ -83,7 +89,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
             key=f"mail_filter_read_{view}",
         )
         if view == "gan_sao":
-            starred_choice = columns[2].selectbox(
+            starred_choice = columns[1].selectbox(
                 t("filter_starred_state", language),
                 options=["starred"],
                 format_func=lambda _: t("folder_starred", language),
@@ -91,7 +97,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
                 key=f"mail_filter_starred_{view}",
             )
         else:
-            starred_choice = columns[2].selectbox(
+            starred_choice = columns[1].selectbox(
                 t("filter_starred_state", language),
                 options=["all", "starred", "unstarred"],
                 format_func=lambda value: {
@@ -101,7 +107,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
                 }[value],
                 key=f"mail_filter_starred_{view}",
             )
-        prediction = columns[3].selectbox(
+        prediction = columns[2].selectbox(
             t("filter_prediction", language),
             options=["", "normal", "spam", "phishing"],
             format_func=lambda value: (
@@ -111,7 +117,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
             ),
             key=f"mail_filter_prediction_{view}",
         )
-        risk_level = columns[4].selectbox(
+        risk_level = columns[3].selectbox(
             t("filter_risk_level", language),
             options=["", "CRITICAL", "HIGH", "MEDIUM", "LOW"],
             format_func=lambda value: (
@@ -121,7 +127,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
             ),
             key=f"mail_filter_risk_{view}",
         )
-        email_language = columns[5].selectbox(
+        email_language = columns[4].selectbox(
             t("filter_email_language", language),
             options=["", "en", "vi", "mixed", "unknown"],
             format_func=lambda value: (
@@ -133,7 +139,6 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
         )
 
     values: dict[str, Any] = {
-        "folder": folder or None,
         "unread": (
             None
             if read_choice == "all"
@@ -151,8 +156,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
     active = any(
         value is not None
         for key, value in values.items()
-        if not (key == "folder" and view in FOLDER_VIEWS)
-        and not (key == "starred" and view == "gan_sao")
+        if not (key == "starred" and view == "gan_sao")
     )
     return values, active
 
@@ -170,6 +174,7 @@ def _render_message_list(
     messages: list[dict[str, Any]],
     language: str,
     *,
+    current_view: str,
     is_search: bool,
 ) -> None:
     st.markdown(f"### {t('message_list', language)} · {len(messages)}")
@@ -186,27 +191,13 @@ def _render_message_list(
     for message in messages:
         email_id = int(message["id"])
         analysis = message.get("analysis")
-        with st.container(border=True):
-            header, status, star = st.columns([5.2, 1.6, 0.7], vertical_alignment="center")
+        with st.container():
+            star, identity, status, sent = st.columns(
+                [0.45, 7.0, 1.35, 1.35], vertical_alignment="center"
+            )
             sender = str(message.get("sender") or t("unknown_sender", language))
             subject = str(message.get("subject") or t("no_subject", language))
-            selected = st.session_state.get("mailbox_selected_id") == email_id
-            with header:
-                if st.button(
-                    f"{'● ' if not message.get('is_read') else ''}{sender} · {subject}",
-                    key=f"mail_select_{email_id}",
-                    type="primary" if selected else "tertiary",
-                    width="stretch",
-                ):
-                    st.session_state["mailbox_selected_id"] = email_id
-                    st.rerun()
-            with status:
-                st.markdown(_prediction_badge(analysis, language), unsafe_allow_html=True)
-                if isinstance(analysis, Mapping):
-                    st.caption(
-                        f"{risk_label(str(analysis.get('risk_level', 'LOW')), language)} "
-                        f"· {float(analysis.get('risk_score', 0.0)):.0f}/100"
-                    )
+            preview = message_preview(message.get("body"), maximum=92)
             with star:
                 if st.button(
                     "★" if message.get("is_starred") else "☆",
@@ -218,10 +209,30 @@ def _render_message_list(
                 ):
                     service.toggle_star(email_id)
                     st.rerun()
-            st.caption(
-                f"{display_timestamp(message.get('sent_at') or message.get('created_at'))}  ·  "
-                f"{message_preview(message.get('body'))}"
-            )
+            with identity:
+                if st.button(
+                    f"{'● ' if not message.get('is_read') else ''}"
+                    f"{sender}    {subject} — {preview}",
+                    key=f"mail_select_{email_id}",
+                    type="primary" if not message.get("is_read") else "tertiary",
+                    width="stretch",
+                ):
+                    _open_detail(email_id, current_view)
+            with status:
+                st.markdown(_prediction_badge(analysis, language), unsafe_allow_html=True)
+                if isinstance(analysis, Mapping) and (
+                    bool(analysis.get("has_warning"))
+                    or str(analysis.get("risk_level")) in {"HIGH", "CRITICAL"}
+                ):
+                    st.caption(
+                        f"{risk_label(str(analysis.get('risk_level', 'LOW')), language)} "
+                        f"· {float(analysis.get('risk_score', 0.0)):.0f}/100"
+                    )
+            with sent:
+                st.caption(
+                    display_timestamp(message.get("sent_at") or message.get("created_at"))
+                )
+        st.divider()
 
 
 def _render_security_message_list(
@@ -246,22 +257,20 @@ def _render_security_message_list(
         analysis = message.get("analysis")
         if not isinstance(analysis, Mapping):
             continue
-        with st.container(border=True):
-            identity, model, risk = st.columns(
-                [4.8, 2.0, 2.1], vertical_alignment="center"
+        with st.container():
+            identity, model, risk, folder_column = st.columns(
+                [5.2, 1.6, 1.8, 1.7], vertical_alignment="center"
             )
             with identity:
                 sender = str(message.get("sender") or t("unknown_sender", language))
                 subject = str(message.get("subject") or t("no_subject", language))
-                selected = st.session_state.get("mailbox_selected_id") == email_id
                 if st.button(
-                    f"{sender} · {subject}",
+                    f"{sender}    {subject} — {message_preview(message.get('body'), maximum=70)}",
                     key=f"security_select_{email_id}",
-                    type="primary" if selected else "tertiary",
+                    type="primary" if not message.get("is_read") else "tertiary",
                     width="stretch",
                 ):
-                    st.session_state["mailbox_selected_id"] = email_id
-                    st.rerun()
+                    _open_detail(email_id, "security")
             with model:
                 st.markdown(_prediction_badge(analysis, language), unsafe_allow_html=True)
                 st.caption(
@@ -273,19 +282,29 @@ def _render_security_message_list(
                     f"**{float(analysis.get('risk_score', 0.0)):.0f}/100 · "
                     f"{risk_label(str(analysis.get('risk_level', 'LOW')), language)}**"
                 )
-                folder = str(message.get("folder", "hop_thu_den"))
-                folder_label = t(FOLDER_VIEW_KEYS.get(folder, "folder_inbox"), language)
                 st.caption(
                     f"{t('security_finding_count', language)}: "
-                    f"{int(analysis.get('security_finding_count', 0))} · "
-                    f"{t('current_folder', language)}: {folder_label}"
+                    f"{int(analysis.get('security_finding_count', 0))}"
                 )
+            with folder_column:
+                folder = str(message.get("folder", "hop_thu_den"))
+                folder_label = t(FOLDER_VIEW_KEYS.get(folder, "folder_inbox"), language)
+                st.caption(f"{t('current_folder', language)}: {folder_label}")
+        st.divider()
 
 
-def _run_mail_action(action: Any, language: str) -> None:
+def _run_mail_action(
+    action: Any,
+    language: str,
+    *,
+    return_to_list: bool = False,
+) -> None:
     try:
         action()
         st.session_state["mailbox_flash"] = ("success", t("mail_action_success", language))
+        if return_to_list:
+            view = return_to_mailbox_list(st.session_state)
+            st.query_params.update({"view": view, "mode": "list"})
         st.rerun()
     except Exception:  # pragma: no cover - final UI boundary
         st.error(t("mail_action_error", language))
@@ -302,24 +321,26 @@ def _render_analysis(
         return
 
     prediction = str(analysis["prediction"])
-    model_column, risk_column = st.columns(2)
-    with model_column.container(border=True):
-        st.caption(t("analysis_model", language))
-        st.markdown(_prediction_badge(analysis, language), unsafe_allow_html=True)
-        st.metric(
-            t("model_confidence", language),
-            f"{float(analysis['confidence']):.1%}",
-        )
-    with risk_column.container(border=True):
-        st.caption(t("analysis_risk", language))
-        st.metric(
-            t("risk_score", language),
-            f"{float(analysis['risk_score']):.0f}/100",
-        )
-        st.markdown(
-            f"**{t('risk_level', language)}:** "
-            f"{risk_label(str(analysis.get('risk_level', 'LOW')), language)}"
-        )
+    summary = st.columns([1.05, 1, 1, 1.25])
+    summary[0].caption(t("analysis_model", language))
+    summary[0].markdown(_prediction_badge(analysis, language), unsafe_allow_html=True)
+    summary[1].metric(
+        t("model_confidence", language),
+        f"{float(analysis['confidence']):.1%}",
+    )
+    summary[2].metric(
+        t("risk_score", language),
+        f"{float(analysis['risk_score']):.0f}/100",
+        help=t("risk_score_help", language),
+    )
+    summary[3].metric(
+        t("recommended_action", language),
+        action_label(str(analysis["recommended_action"]), language),
+    )
+    summary[2].caption(
+        f"{t('risk_level', language)}: "
+        f"{risk_label(str(analysis.get('risk_level', 'LOW')), language)}"
+    )
     st.caption(t("confidence_risk_distinction", language))
 
     if routing and routing.get("has_warning"):
@@ -335,7 +356,7 @@ def _render_analysis(
         else:
             st.warning(warning_text)
     result = analysis.get("result") if isinstance(analysis.get("result"), Mapping) else {}
-    with st.container(border=True):
+    with st.expander(t("analysis_model_explanation", language)):
         st.markdown(f"#### {t('analysis_model_explanation', language)}")
         model_explanation = result.get("model_explanation", {})
         features = (
@@ -353,27 +374,19 @@ def _render_analysis(
         if isinstance(model_explanation, Mapping) and model_explanation.get("limitation"):
             st.caption(str(model_explanation["limitation"]))
 
-    with st.container(border=True):
+    with st.expander(t("analysis_security_findings", language)):
         st.markdown(f"#### {t('analysis_security_findings', language)}")
         content_findings = result.get("content_findings", [])
-        sender_findings = result.get("sender_findings", [])
-        content_column, sender_column = st.columns(2)
-        for column, heading, findings in (
-            (content_column, t("analysis_content_findings", language), content_findings),
-            (sender_column, t("analysis_sender_findings", language), sender_findings),
-        ):
-            with column:
-                st.markdown(f"**{heading}**")
-                if not findings:
-                    st.caption(t("mail_no_findings", language))
-                for finding in findings:
-                    if isinstance(finding, Mapping):
-                        st.markdown(
-                            f"- **{escape(str(finding.get('code', 'indicator')))}** — "
-                            f"{escape(str(finding.get('description', '')))}"
-                        )
+        if not content_findings:
+            st.caption(t("mail_no_findings", language))
+        for finding in content_findings:
+            if isinstance(finding, Mapping):
+                st.markdown(
+                    f"- **{escape(str(finding.get('code', 'indicator')))}** — "
+                    f"{escape(str(finding.get('description', '')))}"
+                )
 
-    with st.container(border=True):
+    with st.expander(t("analysis_url_findings", language)):
         st.markdown(f"#### {t('analysis_url_findings', language)}")
         url_findings = result.get("url_findings", [])
         if not url_findings:
@@ -390,14 +403,19 @@ def _render_analysis(
                     if isinstance(finding, Mapping):
                         st.caption(str(finding.get("description") or finding.get("code", "")))
 
-    with st.container(border=True):
-        st.markdown(f"#### {t('analysis_recommendation', language)}")
-        st.markdown(
-            f"**{action_label(str(analysis['recommended_action']), language)}**"
-        )
-        st.caption(t("recommendation_note", language))
+    with st.expander(t("analysis_sender_findings", language)):
+        st.markdown(f"#### {t('analysis_sender_findings', language)}")
+        sender_findings = result.get("sender_findings", [])
+        if not sender_findings:
+            st.caption(t("mail_no_findings", language))
+        for finding in sender_findings:
+            if isinstance(finding, Mapping):
+                st.markdown(
+                    f"- **{escape(str(finding.get('code', 'indicator')))}** — "
+                    f"{escape(str(finding.get('description', '')))}"
+                )
 
-    with st.container(border=True):
+    with st.expander(t("analysis_limitations", language)):
         st.markdown(f"#### {t('analysis_limitations', language)}")
         limitations = result.get("limitations", [])
         if not limitations:
@@ -415,16 +433,18 @@ def _render_action_buttons(
     """Render applicable actions; MailService persists every state transition."""
 
     folder = str(message.get("folder", ""))
-    actions: list[tuple[str, str, Any]] = [
+    actions: list[tuple[str, str, Any, bool]] = [
         (
             "star",
             t("remove_star" if message.get("is_starred") else "add_star", language),
             lambda: service.toggle_star(selected_id),
+            False,
         ),
         (
             "read",
             t("mark_unread" if message.get("is_read") else "mark_read", language),
             lambda: service.mark_read(selected_id, not bool(message.get("is_read"))),
+            False,
         ),
     ]
     if folder != "hop_thu_den":
@@ -433,6 +453,7 @@ def _render_action_buttons(
                 "inbox",
                 t("move_inbox", language),
                 lambda: service.move_email(selected_id, "hop_thu_den"),
+                True,
             )
         )
     if folder == "thu_rac":
@@ -443,6 +464,7 @@ def _render_action_buttons(
                 lambda: service.record_feedback(
                     selected_id, action="khong_phai_thu_rac"
                 ),
+                True,
             )
         )
     else:
@@ -453,24 +475,25 @@ def _render_action_buttons(
                 lambda: service.record_feedback(
                     selected_id, action="danh_dau_thu_rac"
                 ),
+                True,
             )
         )
+    actions.append(
+        (
+            "report",
+            t("report_phishing", language),
+            lambda: service.record_feedback(selected_id, action="bao_cao_lua_dao"),
+            True,
+        )
+    )
     if folder != "cach_ly":
-        actions.extend(
-            [
-                (
-                    "report",
-                    t("report_phishing", language),
-                    lambda: service.record_feedback(
-                        selected_id, action="bao_cao_lua_dao"
-                    ),
-                ),
-                (
-                    "quarantine",
-                    t("move_quarantine", language),
-                    lambda: service.move_email(selected_id, "cach_ly"),
-                ),
-            ]
+        actions.append(
+            (
+                "quarantine",
+                t("move_quarantine", language),
+                lambda: service.move_email(selected_id, "cach_ly"),
+                True,
+            )
         )
     if folder != "da_xoa":
         actions.append(
@@ -478,12 +501,13 @@ def _render_action_buttons(
                 "delete",
                 t("delete_email", language),
                 lambda: service.move_email(selected_id, "da_xoa"),
+                True,
             )
         )
 
     for start in range(0, len(actions), 3):
         columns = st.columns(3)
-        for column, (action_key, label, callback) in zip(
+        for column, (action_key, label, callback, leaves_detail) in zip(
             columns, actions[start : start + 3], strict=False
         ):
             if column.button(
@@ -491,7 +515,11 @@ def _render_action_buttons(
                 key=f"detail_{action_key}_{selected_id}",
                 width="stretch",
             ):
-                _run_mail_action(callback, language)
+                _run_mail_action(
+                    callback,
+                    language,
+                    return_to_list=leaves_detail,
+                )
 
 
 def _render_message_detail(
@@ -499,15 +527,19 @@ def _render_message_detail(
     selected_id: int | None,
     language: str,
 ) -> None:
-    st.markdown(f"### {t('message_detail', language)}")
+    if st.button(
+        f"← {t('back_to_mailbox', language)}",
+        key="mailbox_back",
+        type="tertiary",
+    ):
+        _back_to_list()
     if selected_id is None:
-        st.info(t("mailbox_empty", language))
+        st.warning(t("mail_detail_unavailable", language))
         return
     payload = service.open_email(selected_id)
     message = payload.get("email")
     if not isinstance(message, Mapping):
-        st.session_state["mailbox_selected_id"] = None
-        st.info(t("mailbox_empty", language))
+        st.error(t("mail_detail_unavailable", language))
         return
 
     analysis = payload.get("analysis")
@@ -516,26 +548,37 @@ def _render_message_detail(
         if isinstance(analysis, Mapping)
         else ""
     )
-    if prediction == "phishing":
+    folder = str(message.get("folder", ""))
+    if folder == "cach_ly" or prediction == "phishing":
         st.error(
-            f"**{t('phishing_banner_title', language)}**\n\n"
-            f"{t('phishing_banner_body', language)}",
+            f"**{t('phishing_banner_title' if prediction == 'phishing' else 'quarantine_banner_title', language)}**\n\n"
+            f"{t('phishing_banner_body' if prediction == 'phishing' else 'quarantine_banner_body', language)}",
             icon="🚨",
         )
-    elif prediction == "spam":
+    elif folder == "thu_rac":
         st.warning(t("spam_banner", language), icon="📨")
 
+    subject_column, badge_column = st.columns([7.5, 1.5], vertical_alignment="center")
+    subject_column.markdown(
+        f"## {escape(str(message.get('subject') or t('no_subject', language)))}"
+    )
+    if isinstance(analysis, Mapping):
+        badge_column.markdown(
+            _prediction_badge(analysis, language),
+            unsafe_allow_html=True,
+        )
     st.markdown(
         f"**{t('mail_from', language)}:** {escape(str(message.get('sender') or t('unknown_sender', language)))}  \n"
         f"**{t('mail_to', language)}:** {escape(str(message.get('receiver') or '—'))}  \n"
-        f"**{t('mail_sent', language)}:** {escape(display_timestamp(message.get('sent_at')))}  \n"
-        f"**{t('mail_header_subject', language)}:** "
-        f"{escape(str(message.get('subject') or t('no_subject', language)))}"
+        f"**{t('mail_sent', language)}:** {escape(display_timestamp(message.get('sent_at')))}"
     )
     if message.get("cc"):
         st.caption(f"{t('mail_cc', language)}: {escape(str(message['cc']))}")
-    st.code(str(message.get("body") or ""), language=None, wrap_lines=True)
     _render_action_buttons(service, message, selected_id, language)
+
+    st.divider()
+    st.markdown(f"### {t('email_body_heading', language)}")
+    st.text(str(message.get("body") or ""))
 
     st.divider()
     _render_analysis(payload.get("analysis"), payload.get("routing"), language)
@@ -555,19 +598,7 @@ def render() -> None:
 
     language = _language()
     view = _view_from_query()
-    previous_view = st.session_state.get("mailbox_current_view")
-    if previous_view != view:
-        st.session_state["mailbox_selected_id"] = None
-        st.session_state["mailbox_current_view"] = view
-
-    st.markdown(
-        '<div class="vmg-mail-header">'
-        f'<div><div class="vmg-eyebrow">AI-POWERED BILINGUAL EMAIL SECURITY CLIENT</div>'
-        f'<h1>{escape(t("mail_client_title", language))}</h1>'
-        f'<p>{escape(t("mail_client_intro", language))}</p></div></div>',
-        unsafe_allow_html=True,
-    )
-    st.caption(t("demo_data_notice", language))
+    mode = sync_mailbox_navigation(st.session_state, view, _mode_from_query())
 
     try:
         service = MailService.from_database_path(DEFAULT_DATABASE_PATH)
@@ -580,7 +611,43 @@ def render() -> None:
         if isinstance(flash, tuple) and len(flash) == 2:
             getattr(st, str(flash[0]), st.info)(str(flash[1]))
 
-        import_column, search_column = st.columns([1, 2.2], vertical_alignment="bottom")
+        if mode == "detail":
+            selected_id = st.session_state.get("mailbox_selected_id")
+            _render_message_detail(
+                service,
+                None if selected_id is None else int(selected_id),
+                language,
+            )
+            return
+
+        title_column, refresh_column = st.columns(
+            [8.5, 1.0], vertical_alignment="bottom"
+        )
+        with title_column:
+            st.markdown(
+                '<div class="vmg-mail-header">'
+                f'<div><div class="vmg-eyebrow">AI-POWERED BILINGUAL EMAIL SECURITY CLIENT</div>'
+                f'<h1>{escape(t("mail_client_title", language))}</h1>'
+                f'<p>{escape(t("mail_client_intro", language))}</p></div></div>',
+                unsafe_allow_html=True,
+            )
+        with refresh_column:
+            if st.button(
+                t("refresh_mailbox", language),
+                key="mailbox_refresh",
+                width="stretch",
+            ):
+                st.rerun()
+        st.caption(t("demo_data_notice", language))
+        st.markdown(f"## {t(FOLDER_VIEW_KEYS[view], language)}")
+
+        search_column, import_column = st.columns([3.0, 1.2], vertical_alignment="bottom")
+        with search_column:
+            query = st.text_input(
+                t("mail_search", language),
+                placeholder=t("mail_search_placeholder", language),
+                key="mailbox_search_query",
+            )
         with import_column:
             uploaded = st.file_uploader(
                 t("mail_import", language),
@@ -597,25 +664,26 @@ def render() -> None:
                 try:
                     with st.spinner(t("mail_importing", language)):
                         imported = service.import_eml_bytes(uploaded.getvalue())
-                    st.session_state["mailbox_selected_id"] = imported["email"]["id"]
+                    imported_email = imported["email"]
+                    routed_folder = str(imported_email["folder"])
+                    select_mailbox_message(
+                        st.session_state,
+                        int(imported_email["id"]),
+                        routed_folder,
+                    )
+                    st.query_params.update({"view": routed_folder, "mode": "detail"})
                     message = t(
                         "mail_import_duplicate" if imported["duplicate"] else "mail_import_success",
                         language,
                     )
+                    folder_label = t(FOLDER_VIEW_KEYS[routed_folder], language)
                     st.session_state["mailbox_flash"] = (
                         "info" if imported["duplicate"] else "success",
-                        message,
+                        f"{message} {t('mail_routed_to', language, folder=folder_label)}",
                     )
                     st.rerun()
                 except Exception:  # pragma: no cover - final UI boundary
                     st.error(t("mail_import_error", language))
-        with search_column:
-            query = st.text_input(
-                t("mail_search", language),
-                placeholder=t("mail_search_placeholder", language),
-                key="mailbox_search_query",
-            )
-
         filters, has_active_filter = _render_search_filters(view, language)
         if view == "security":
             counts = service.mailbox_counts()
@@ -632,34 +700,20 @@ def render() -> None:
             )
 
         messages = _messages_for_view(service, view, query, filters)
-        selected_id = st.session_state.get("mailbox_selected_id")
-        available_ids = {int(message["id"]) for message in messages}
-        if selected_id is not None and int(selected_id) not in available_ids:
-            selected_id = None
-            st.session_state["mailbox_selected_id"] = None
-
-        list_column, detail_column = st.columns([0.92, 1.25], gap="medium")
-        with list_column:
-            st.markdown(f"#### {t(FOLDER_VIEW_KEYS[view], language)}")
-            is_search = bool(query.strip()) or has_active_filter
-            if view == "security":
-                _render_security_message_list(
-                    messages,
-                    language,
-                    is_search=is_search,
-                )
-            else:
-                _render_message_list(
-                    service,
-                    messages,
-                    language,
-                    is_search=is_search,
-                )
-        with detail_column:
-            _render_message_detail(
-                service,
-                None if selected_id is None else int(selected_id),
+        is_search = bool(query.strip()) or has_active_filter
+        if view == "security":
+            _render_security_message_list(
+                messages,
                 language,
+                is_search=is_search,
+            )
+        else:
+            _render_message_list(
+                service,
+                messages,
+                language,
+                current_view=view,
+                is_search=is_search,
             )
     finally:
         service.close()

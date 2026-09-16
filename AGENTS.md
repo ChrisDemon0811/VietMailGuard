@@ -2964,5 +2964,36 @@ The local mail client is complete only when:
 - old Quick Analyzer still works
 - tests pass
 
+---
+
+# 96. Mailbox List / Detail Navigation
+
+The primary mailbox uses two explicit, mutually exclusive modes:
+
+- `list`: a full-width dense mailbox list and mailbox controls
+- `detail`: a full-width reading view for one stored email and its persisted
+  VietMailGuard analysis
+
+Do not restore the permanent side-by-side list/detail split pane.
+
+Opening a message must use its persisted `id_thu` through `MailService` and must
+not depend on whether that id remains in the active filtered list. Preserve the
+originating folder/view so Back returns to the correct list. Search and filter
+state should remain in Streamlit session state where practical.
+
+Spam and Quarantine messages remain readable. Quarantine means isolated and
+warned, not hidden or deleted. Opening stored mail may mark it read, but it must
+not move the message or rerun ML inference.
+
+Email content is the main focus of detail mode. Keep prediction, calibrated
+confidence, risk score, and recommended action visible; place deeper model,
+security, URL, sender, limitation, and history information behind progressive
+disclosure controls.
+
+Folder moves and deletion return to the originating list with feedback. Read
+and star actions may remain in detail mode. All SQL stays in `MailRepository`,
+business logic stays in `MailService`, and prediction stays in the frozen
+inference layer.
+
 
 luôn luôn trả lời bằng tiếng Việt

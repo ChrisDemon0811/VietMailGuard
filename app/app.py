@@ -120,7 +120,7 @@ with st.sidebar:
             mail_page,
             label=link_label(label_key, view),
             icon=icon,
-            query_params={"view": view},
+            query_params={"view": view, "mode": "list"},
             width="stretch",
         )
     st.page_link(

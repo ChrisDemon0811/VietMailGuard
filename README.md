@@ -82,6 +82,22 @@ inference again. Imported HTML is converted to plain text, remote images are not
 loaded, links are not opened automatically, and attachments are not claimed as
 malware-scanned.
 
+The mailbox now uses two full-width navigation modes rather than a permanent
+split pane:
+
+```text
+Mailbox list -> select a message -> full-width reading view
+             <- Back returns to the originating folder/view
+```
+
+Inbox, Spam, Quarantine, Deleted, Starred, and Security View all open the same
+stored-message detail renderer. Detail lookup is by email id through
+`MailService`, so active search/filter results do not control whether an email
+can be read. Spam and Quarantine content remains readable; warnings and security
+analysis use progressive disclosure below the plain-text message body. Moving or
+deleting a message returns to the originating list, while read/star changes stay
+on the open message.
+
 The reproducible seed contains demonstration messages only. They are not an
 evaluation dataset and their predictions are not scientific metrics:
 
@@ -352,6 +368,22 @@ Security View đọc analysis đã lưu và sắp xếp theo rủi ro, không ch
 lại khi render danh sách. HTML được chuyển thành plain text, ảnh từ xa không
 được tải, URL không tự mở và hệ thống không tuyên bố đã quét malware trong file
 đính kèm.
+
+Mailbox dùng hai chế độ toàn chiều rộng, không còn khung danh sách và nội dung
+đặt cố định cạnh nhau:
+
+```text
+Danh sách thư -> chọn thư -> trang đọc thư toàn chiều rộng
+               <- Quay lại đúng thư mục/góc nhìn ban đầu
+```
+
+Hộp thư đến, Thư rác, Cách ly, Đã xóa, Gắn sao và Security View đều dùng chung
+một trang chi tiết. Thư được mở trực tiếp bằng id qua `MailService`, nên bộ lọc
+hoặc kết quả tìm kiếm hiện tại không quyết định thư có đọc được hay không. Thư
+rác và thư cách ly vẫn đọc được; phần nội dung plain text được ưu tiên, còn giải
+thích mô hình, dấu hiệu bảo mật, URL, người gửi, giới hạn và lịch sử được thu gọn
+theo progressive disclosure. Chuyển/xóa thư quay về danh sách ban đầu; thao tác
+đọc và gắn sao giữ nguyên trang chi tiết.
 
 Các email do script seed tạo chỉ dùng để trình diễn giao diện, không phải dữ
 liệu evaluation và không tạo metric khoa học:
