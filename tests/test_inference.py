@@ -108,6 +108,7 @@ def test_linear_explanation_uses_observed_model_features() -> None:
     assert all(reason["contribution"] > 0 for reason in reasons)
 
 
+@pytest.mark.production_artifact
 def test_production_model_runs_through_stable_inference_schema() -> None:
     engine = EmailSecurityInference()
     result = engine.analyze_email(
