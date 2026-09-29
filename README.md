@@ -55,7 +55,7 @@ VietMailGuard Mail is the primary local mailbox workflow. It reuses the frozen
 inference layer and keeps SQL outside Streamlit:
 
 ```text
-Email / .eml import
+Locally composed demo email / .eml import
         -> frozen ML + security/risk analysis
         -> prediction-based routing
         -> SQLite persistence
@@ -97,6 +97,13 @@ can be read. Spam and Quarantine content remains readable; warnings and security
 analysis use progressive disclosure below the plain-text message body. Moving or
 deleting a message returns to the originating list, while read/star changes stay
 on the open message.
+
+Use **New demo mail** in the mailbox toolbar to enter a sender, optional
+recipient, subject, and body. The message is analyzed once by the frozen
+production model, routed according to its actual prediction, saved locally,
+and opened in its destination folder. This simulates receiving mail locally;
+it does **not** send email over the Internet. Demo messages are not evaluation
+data, and a model prediction is not a guaranteed ground-truth label.
 
 The reproducible seed contains demonstration messages only. They are not an
 evaluation dataset and their predictions are not scientific metrics:
@@ -344,7 +351,7 @@ VietMailGuard Mail là luồng sử dụng chính ở máy cá nhân. Streamlit 
 SQL hay gọi classifier trực tiếp:
 
 ```text
-Email / file .eml
+Thư demo soạn tại chỗ / file .eml
 -> ML đã đóng băng + phân tích security/risk
 -> định tuyến theo prediction
 -> lưu SQLite
@@ -384,6 +391,13 @@ rác và thư cách ly vẫn đọc được; phần nội dung plain text đư�
 thích mô hình, dấu hiệu bảo mật, URL, người gửi, giới hạn và lịch sử được thu gọn
 theo progressive disclosure. Chuyển/xóa thư quay về danh sách ban đầu; thao tác
 đọc và gắn sao giữ nguyên trang chi tiết.
+
+Nút **Soạn thư demo** trên thanh công cụ cho phép nhập người gửi, người nhận
+không bắt buộc, tiêu đề và nội dung. Mô hình production phân tích một lần,
+`MailService` định tuyến theo dự đoán thực tế rồi lưu thư vào SQLite và mở
+thư tại thư mục đích. Đây là mô phỏng nhận thư **cục bộ**, không gửi email ra
+Internet. Thư demo không phải dữ liệu đánh giá và dự đoán của mô hình không
+được coi là nhãn đúng tuyệt đối.
 
 Các email do script seed tạo chỉ dùng để trình diễn giao diện, không phải dữ
 liệu evaluation và không tạo metric khoa học:

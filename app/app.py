@@ -16,6 +16,7 @@ for import_root in (PROJECT_ROOT, SOURCE_ROOT, APP_ROOT):
 import streamlit as st
 
 from i18n import SUPPORTED_LANGUAGES, t
+from mailbox_ui import sync_mailbox_navigation
 from styles import apply_global_styles
 from vietmailguard.mail_service import MailService
 
@@ -23,7 +24,7 @@ st.set_page_config(
     page_title="VietMailGuard Mail",
     page_icon=":material/security:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 apply_global_styles()
 
@@ -68,17 +69,7 @@ navigation = st.navigation(
 )
 
 with st.sidebar:
-    language = st.selectbox(
-        t("interface_language", st.session_state["interface_language"]),
-        options=list(SUPPORTED_LANGUAGES),
-        index=list(SUPPORTED_LANGUAGES).index(st.session_state["interface_language"]),
-        format_func=lambda code: t("language_name", code),
-        key="language_selector",
-    )
-    st.session_state["interface_language"] = language
-    st.markdown(f"### {t('app_title', language)}")
-    st.caption(t("app_subtitle", language))
-    st.caption(t("sidebar_scope", language))
+    st.markdown(f"### {t('nav_mail_client', language)}")
     try:
         with MailService.from_database_path() as mail_service:
             mailbox_counts = mail_service.mailbox_counts()
@@ -105,33 +96,52 @@ with st.sidebar:
             return f"{label}  {count} · {unread} {t('unread', language).lower()}"
         return f"{label}  {count}"
 
-    st.divider()
-    st.caption(t("mailbox_navigation", language).upper())
     mailbox_links = (
         ("folder_inbox", "hop_thu_den", ":material/inbox:"),
         ("folder_starred", "gan_sao", ":material/star:"),
         ("folder_spam", "thu_rac", ":material/report:"),
         ("folder_quarantine", "cach_ly", ":material/gpp_bad:"),
         ("folder_deleted", "da_xoa", ":material/delete:"),
-        ("security_view", "security", ":material/shield:"),
     )
     for label_key, view, icon in mailbox_links:
-        st.page_link(
-            mail_page,
-            label=link_label(label_key, view),
+        if st.button(
+            link_label(label_key, view),
             icon=icon,
-            query_params={"view": view, "mode": "list"},
+            key=f"mail_nav_{view}",
+            type="tertiary",
             width="stretch",
-        )
+        ):
+            sync_mailbox_navigation(st.session_state, view, "list")
+            st.switch_page(mail_page, query_params={"view": view, "mode": "list"})
+    st.markdown('<div class="vmg-sidebar-rule"></div>', unsafe_allow_html=True)
+    if st.button(
+        link_label("security_view", "security"),
+        icon=":material/shield:",
+        key="mail_nav_security",
+        type="tertiary",
+        width="stretch",
+    ):
+        sync_mailbox_navigation(st.session_state, "security", "list")
+        st.switch_page(mail_page, query_params={"view": "security", "mode": "list"})
+    st.markdown('<div class="vmg-sidebar-rule"></div>', unsafe_allow_html=True)
+    st.caption(t("mail_tools", language))
     st.page_link(
         quick_analyzer_page,
         label=t("nav_email_analyzer", language),
         icon=":material/troubleshoot:",
         width="stretch",
     )
-    st.divider()
     st.page_link(model_page, label=t("nav_model_dashboard", language), width="stretch")
     st.page_link(dataset_page, label=t("nav_dataset_dashboard", language), width="stretch")
     st.page_link(methodology_page, label=t("nav_methodology", language), width="stretch")
+    st.markdown('<div class="vmg-sidebar-rule"></div>', unsafe_allow_html=True)
+    language = st.selectbox(
+        t("interface_language", language),
+        options=list(SUPPORTED_LANGUAGES),
+        index=list(SUPPORTED_LANGUAGES).index(st.session_state["interface_language"]),
+        format_func=lambda code: t("language_name", code),
+        key="language_selector",
+    )
+    st.session_state["interface_language"] = language
 
 navigation.run()

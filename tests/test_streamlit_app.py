@@ -27,7 +27,7 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
 
     app.switch_page("pages/email_analyzer.py").run(timeout=90)
     assert not app.exception
-    assert [button.label for button in app.button] == ["Analyze Email"]
+    assert [button.label for button in app.main.button] == ["Analyze Email"]
 
     app.switch_page("pages/model_dashboard.py").run(timeout=90)
     assert not app.exception
@@ -87,7 +87,7 @@ def test_language_switch_preserves_inference_result() -> None:
     assert not app.exception
     assert before["prediction"] == after["prediction"] == "normal"
     assert before["confidence"] == after["confidence"]
-    assert [button.label for button in app.button] == ["Phân tích Email"]
+    assert [button.label for button in app.main.button] == ["Phân tích Email"]
     displayed_metrics = {metric.label: metric.value for metric in app.metric}
     assert displayed_metrics["Hành động đề xuất"] == "Cho phép"
 
