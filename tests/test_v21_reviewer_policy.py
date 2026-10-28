@@ -9,7 +9,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import socket
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -38,13 +37,8 @@ SYNTHETIC = ReviewRequest(
 
 
 @pytest.fixture(autouse=True)
-def forbid_network(monkeypatch):
-    def forbidden(*args, **kwargs):
-        raise AssertionError("Policy tests must not access any network or email URL")
-
-    monkeypatch.setattr(socket, "create_connection", forbidden)
-    monkeypatch.setattr(socket.socket, "connect", forbidden)
-    monkeypatch.setattr(socket.socket, "connect_ex", forbidden)
+def forbid_network(no_external_network):
+    """Non-UI policy tests retain a complete socket block."""
 
 
 def answer(assessment="review"):
@@ -217,7 +211,7 @@ def test_missing_quoted_evidence_is_rejected_not_invented():
 
 
 @pytest.mark.parametrize("language", ["en", "vi"])
-def test_legacy_reviewer_ui_does_not_present_schema_ok_as_verified_ground_truth(language):
+def test_legacy_reviewer_ui_does_not_present_schema_ok_as_verified_ground_truth(language, streamlit_loopback):
     from streamlit.testing.v1 import AppTest
 
     saved = {

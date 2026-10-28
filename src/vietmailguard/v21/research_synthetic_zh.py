@@ -44,6 +44,7 @@ from .paths import V21Paths, resolve_v21_paths
 
 
 AUDIT_VERSION = 1
+MAX_CSV_FIELD_SIZE = 100_000_000
 SOURCE_NAME = "LLMGen_CN_DeepSeek"
 SOURCE_FIELDS = {"content", "label"}
 RESEARCH_FIELDS = (
@@ -262,7 +263,7 @@ def audit_and_prepare(paths: V21Paths | None = None) -> dict[str, Any]:
             return existing
         raise ResearchExperimentBlocked("Existing research manifest differs; refusing to overwrite it")
 
-    csv.field_size_limit(sys.maxsize)
+    csv.field_size_limit(MAX_CSV_FIELD_SIZE)
     rows: list[dict[str, Any]] = []
     source_url = (f"hf://datasets/{config['source_repo']}@"
                   f"{config['source_revision']}/{config['source_file']}")
@@ -349,7 +350,7 @@ def audit_and_prepare(paths: V21Paths | None = None) -> dict[str, Any]:
 def _load_research_csv(path: Path, expected_split: str, expected_sha: str) -> pd.DataFrame:
     if not path.is_file() or sha256_file(path) != expected_sha:
         raise ResearchExperimentBlocked(f"Prepared {expected_split} CSV checksum changed")
-    csv.field_size_limit(sys.maxsize)
+    csv.field_size_limit(MAX_CSV_FIELD_SIZE)
     data: list[dict[str, str]] = []
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import copy
 import json
-import socket
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -39,16 +38,11 @@ def _analysis(prediction="normal"):
 
 
 @pytest.fixture
-def fake_gemini(tmp_path, monkeypatch):
+def fake_gemini(tmp_path, monkeypatch, streamlit_loopback):
     """Keep the real provider/service validation; fake only SDK I/O and ML."""
     from vietmailguard.v21 import gemini_reviewer as gemini
     from vietmailguard.v21 import llm_reviewer, runtime_inference
 
-    def no_network(*_args, **_kwargs):
-        raise AssertionError("This test must not connect to an external service")
-
-    monkeypatch.setattr(socket, "create_connection", no_network)
-    monkeypatch.setattr(socket.socket, "connect", no_network)
     monkeypatch.setenv("VIETMAILGUARD_MAIL_DB", str(tmp_path / "mail.db"))
     monkeypatch.setenv("GEMINI_API_KEY", "synthetic-test-placeholder-not-a-real-key")
     monkeypatch.setenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
@@ -233,7 +227,7 @@ def test_missing_key_prevents_gemini_construction_even_with_checkbox(fake_gemini
     assert state.calls == state.constructions == []
 
 
-def test_gemini_mailbox_review_preserves_quarantine_and_exact_analysis(fake_gemini):
+def test_gemini_mailbox_review_preserves_quarantine_and_exact_analysis(fake_gemini, query_param_values):
     state = fake_gemini
     original = _analysis("phishing")
     state.response["assessment"] = "normal"
@@ -263,5 +257,5 @@ def test_gemini_mailbox_review_preserves_quarantine_and_exact_analysis(fake_gemi
         assert stored["analysis"]["result"] == original
         assert stored["llm_review"]["result"]["reviewer"]["assessment"] == "normal"
         assert stored["llm_review"]["result"]["reviewer"]["recommendation"] == "REVIEW"
-    assert app.query_params["view"] == ["cach_ly"]
-    assert app.query_params["mode"] == ["detail"]
+    assert query_param_values(app.query_params["view"]) == ["cach_ly"]
+    assert query_param_values(app.query_params["mode"]) == ["detail"]

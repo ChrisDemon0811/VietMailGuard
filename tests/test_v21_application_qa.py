@@ -156,6 +156,7 @@ def test_disposable_mailbox_eml_feedback_persistence_and_integrity(tmp_path: Pat
 
 def test_hybrid_mailbox_review_does_not_reanalyze_or_reroute(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    query_param_values,
 ) -> None:
     if not model_availability()[0]:
         pytest.skip("V2.1 candidate artifact not present in clean clone")
@@ -201,8 +202,8 @@ def test_hybrid_mailbox_review_does_not_reanalyze_or_reroute(
     assert any(button.key == f"mail_select_{email_id}" for button in app.button)
     next(button for button in app.button if button.key == f"mail_select_{email_id}").click().run()
     assert not app.exception
-    assert app.query_params["view"] == ["cach_ly"]
-    assert app.query_params["mode"] == ["detail"]
+    assert query_param_values(app.query_params["view"]) == ["cach_ly"]
+    assert query_param_values(app.query_params["mode"]) == ["detail"]
     assert provider_calls == []
     assert len(analysis_calls) == 1
     assert app.session_state["analysis_mode"] == "v21_hybrid", [

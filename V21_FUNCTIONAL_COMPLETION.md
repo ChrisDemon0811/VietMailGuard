@@ -714,3 +714,116 @@ trong project gốc. Có thể dùng launcher hiện có:
 Mở **Dataset Dashboard** hoặc **Model Dashboard**, chọn tab V2.1 Research
 Preview và mục nghiên cứu cần xem. Publication approval vẫn NO; không commit,
 push, sửa Clean Export, train, refit hoặc recalibrate model.
+
+## 14. Sửa CI Windows: socket AppTest, CSV và query parameters
+
+Ngày kiểm tra: 2026-10-28; branch local `v21/research-preview`, HEAD
+`dedac0f9b826fa7ed6e52f6975c2d7b67e3844a7`, khớp commit của
+[GitHub Actions run 40642509305](https://github.com/ChrisDemon0811/VietMailGuard/actions/runs/40642509305).
+Đã đọc job log bằng GitHub connector, chỉ thao tác read-only. Job Windows
+Python 3.11.9 cài Streamlit 1.66.1 và báo **20 failed, 480 passed, 33 skipped,
+27 deselected**. Không rerun job, commit, push hoặc thay workflow.
+
+### Nguyên nhân và cách sửa
+
+1. **15 lỗi socket:** Streamlit mới tạo event loop trong `LocalScriptRunner`.
+   Trên Windows, asyncio Proactor tạo self-pipe qua `socket.socketpair()` và
+   TCP loopback. Fixture cũ chặn tất cả `connect`, gồm `127.0.0.1`, làm AppTest
+   lỗi trước khi chạy UI. Đã tái hiện self-pipe lỗi trên máy local và tái hiện
+   15 lỗi AppTest bằng bản source trước sửa với Streamlit 1.66.0.
+2. **3 lỗi CSV:** `sys.maxsize` của Python 64-bit vượt C `long` 32-bit trên
+   Windows CPython 3.11; `csv.field_size_limit()` cũ ném OverflowError. CPython
+   3.13 local chấp nhận giá trị này, nên test trước đây không bắt được. Cả hai
+   reader trong `research_synthetic_zh.py` nay dùng giới hạn hữu hạn
+   **100.000.000 ký tự**, phù hợp C long 32-bit và quy ước các reader V2.1 khác.
+   Test mô phỏng boundary C long của Windows và kiểm tra đọc field synthetic
+   dài hơn giới hạn mặc định 131.072 ký tự. Không xử lý lại dữ liệu nghiên cứu.
+3. **2 lỗi assertion query parameters:** AppTest/Streamlit có phiên bản trả
+   scalar string, phiên bản khác trả singleton list. Fixture chuẩn hóa chỉ
+   hai dạng hợp lệ này; vẫn kiểm tra chính xác view/mode, số giá trị, email ID,
+   body, prediction/history/routing. Không lấy tùy tiện phần tử cuối hoặc đổi
+   điều hướng để làm test qua. Cũng sửa hai assertion cùng dạng ở các test
+   Hybrid vốn không chạy trên clone thiếu candidate binary.
+
+Fixture network chung **không autouse toàn suite**. Các nhóm test vốn có
+no-network giữ strict blocking; chỉ test UI khai báo `streamlit_loopback`
+được dùng địa chỉ IP loopback dạng số (IPv4/IPv6 và mapped loopback). DNS,
+hostname, wildcard, IP ngoài, `connect_ex`, `create_connection` và UDP gửi ra
+ngoài vẫn bị chặn trước I/O. Test non-UI tiếp tục chặn cả loopback. Có test
+socket TCP loopback thực và asyncio/AppTest thực, không thay transport của
+framework bằng kết quả giả. Gemini vẫn dùng fake SDK trong mọi test.
+
+Sau khi gỡ blocker socket, bốn test dashboard lộ giả định rằng artifact
+nghiên cứu luôn có trong checkout. Đã cấp fixture aggregate synthetic riêng
+trong thư mục pytest tạm, giữ toàn bộ assertion hiển thị và chặn email/model
+reads. Kiểm tra chiều lỗi luôn chạy với số synthetic xác định; không còn phụ
+thuộc conditional chỉ kiểm tra khi có kết quả local. Không sửa UI hoặc metric
+thật để đáp ứng test. Test empty-artifact vẫn kiểm tra trạng thái thiếu file.
+
+### File thay đổi trong nhiệm vụ
+
+- `src/vietmailguard/v21/research_synthetic_zh.py`: hằng số và hai CSV limit.
+- `tests/conftest.py` (mới): fixture network và query parameter compatibility.
+- `tests/test_ci_compatibility.py` (mới): 68 trường hợp network/API shape,
+  gồm chặn mạng ngoài và cho self-pipe loopback đúng phạm vi.
+- `tests/test_mailbox_ui.py`: assertion query parameters.
+- `tests/test_v21_application_qa.py`: assertion query parameters Hybrid.
+- `tests/test_v21_dashboards.py`: network fixture và synthetic aggregates.
+- `tests/test_v21_gemini_ui.py`: network fixture và query parameters.
+- `tests/test_v21_reviewer_policy.py`: strict network mặc định, UI opt-in.
+- `tests/test_v21_research_synthetic_zh.py`: hai regression test CSV.
+- `V21_FUNCTIONAL_COMPLETION.md`: mục này.
+
+`.env.example` đã untracked trước nhiệm vụ và không bị sửa. Các harness QA mới
+nằm trong `.local-test-deps/ci-compat/`, không phải source phát hành. Không sửa
+CI workflow, dependency versions, V2 frozen, candidate V2.1 hoặc dataset.
+
+### Kiểm thử và giới hạn bằng chứng
+
+| Kiểm tra | Kết quả |
+| --- | --- |
+| Nhóm test liên quan tại project gốc, Python 3.13.14 / Streamlit 1.63.0 | **PASS — 141 passed** |
+| Regression source-only, Python 3.13.14 / Streamlit 1.63.0 | **PASS — 571 passed, 32 skipped, 27 deselected** |
+| Regression source-only, Python 3.13.14 / Streamlit 1.66.0 có sẵn local | **PASS — 571 passed, 32 skipped, 27 deselected** |
+| Windows 3.11 C-long boundary và hai reader | **PASS — emulated boundary; field dài synthetic đọc đúng** |
+| Python 3.11 syntax parse trên code mới | **PASS — chỉ kiểm tra cú pháp** |
+| Python 3.11 runtime local | **UNAVAILABLE — launcher chỉ liệt kê Python 3.13; không tải/cài interpreter** |
+| Windows Python 3.11.9 / Streamlit 1.66.1 sau fix trên GitHub | **CHƯA CHẠY — cần commit/push do chủ dự án quyết định** |
+| Frozen V2 byte-hash | **PASS — 103/103 không đổi** |
+| `git diff --check` | **PASS — chỉ cảnh báo LF/CRLF** |
+
+Để không mở held-out thật, regression CI chạy trong snapshot source-only tạm
+trong vùng QA local. Snapshot chứa **mọi file test tracked** cộng hai file test
+mới; harness kiểm tra không thiếu test. Không sao chép `.env`, Git history,
+email dataset, model binary hoặc database cá nhân. Loader chỉ đọc metadata và
+metric tổng hợp đã được allowlist. Toàn bộ source test được chọn theo đúng
+`-m "not production_artifact"`; không truyền deselect node IDs hoặc xfail.
+**32 skip** là điều kiện sẵn có khi thiếu artifact/dataset local và TREC
+integration opt-in; **27 deselect** là marker production_artifact như CI hiện
+tại. Không gọi đây là full integration với model/dataset thật. Receipt network
+và original-data guard ghi nhận **0 guarded access attempts**.
+
+Các test có fit pipeline chỉ dùng fixture synthetic nhỏ trong thư mục pytest
+tạm vốn có của suite. Không train lại candidate, fit TF-IDF nghiên cứu, gọi
+Gemini live, phân tích hay đánh giá held-out thật. Baseline source trên
+Streamlit 1.66.0 tái hiện 17 lỗi socket/query; ba lỗi C-long được xác nhận từ
+log 3.11 và regression mô phỏng, không được báo cáo như đã chạy native 3.11.
+
+Các lệnh chính đã chạy từ project gốc:
+
+```powershell
+.\.venv\Scripts\python.exe .local-test-deps/ci-compat/reproduce.py
+.\.venv\Scripts\python.exe -m pytest tests/test_mailbox_ui.py tests/test_ci_compatibility.py tests/test_v21_dashboards.py tests/test_v21_gemini_ui.py tests/test_v21_reviewer_policy.py tests/test_v21_research_synthetic_zh.py tests/test_v21_application_qa.py -q --basetemp=.local-test-deps/ci-compat/targeted-final
+# 141 passed
+.\.venv\Scripts\python.exe .local-test-deps/ci-compat/source_suite.py prepare after-final
+.\.venv\Scripts\python.exe .local-test-deps/ci-compat/source_suite.py run after-final -m "not production_artifact" -q -rs --basetemp="D:\Study\Macchine Learrning\VietMailGuard\.local-test-deps\ci-compat\pytest-complete63" --junitxml="D:\Study\Macchine Learrning\VietMailGuard\.local-test-deps\ci-compat\complete63.xml"
+& "D:\Study\Macchine Learrning\VietMailGuard_V21_Independent_Verification\venv-stable\Scripts\python.exe" .local-test-deps/ci-compat/source_suite.py run after-final -m "not production_artifact" -q -rs --basetemp="D:\Study\Macchine Learrning\VietMailGuard\.local-test-deps\ci-compat\pytest-complete66" --junitxml="D:\Study\Macchine Learrning\VietMailGuard\.local-test-deps\ci-compat\complete66.xml"
+.\.venv\Scripts\python.exe .local-test-deps/functional-v21/verify_local.py compare
+git diff --check
+```
+
+`source_suite.py` chỉ là launcher QA local để chặn network ngoài và đọc dữ
+liệu/model gốc; bên trong gọi `pytest.main` với đúng selection CI. Nó không
+thay các fixture source hoặc bỏ node test. JUnit, snapshot manifests và access
+receipts được giữ local trong `.local-test-deps/ci-compat/`. Không đồng bộ Clean
+Export, không tạo release hoặc thay publication approval.

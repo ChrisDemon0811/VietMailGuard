@@ -140,6 +140,7 @@ def test_lost_query_params_do_not_bounce_protected_folders_to_inbox(
 def test_sidebar_folder_switch_opens_message_from_selected_folder(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    query_param_values,
 ) -> None:
     """A folder change must replace stale detail query parameters before a click."""
 
@@ -173,14 +174,14 @@ def test_sidebar_folder_switch_opens_message_from_selected_folder(
         next(button for button in app.button if button.key == f"mail_nav_{view}").click()
         app.run()
         assert not app.exception
-        assert app.query_params["view"] == [view]
-        assert app.query_params["mode"] == ["list"]
+        assert query_param_values(app.query_params["view"]) == [view]
+        assert query_param_values(app.query_params["mode"]) == ["list"]
 
         next(button for button in app.button if button.key == f"mail_select_{ids[view]}").click()
         app.run()
         assert not app.exception
-        assert app.query_params["view"] == [view]
-        assert app.query_params["mode"] == ["detail"]
+        assert query_param_values(app.query_params["view"]) == [view]
+        assert query_param_values(app.query_params["mode"]) == ["detail"]
         assert app.session_state["mailbox_selected_id"] == ids[view]
         assert any(f"Subject {view}" in item.value for item in app.markdown)
         assert any(f"Body {view}" in item.value for item in app.text)
@@ -319,6 +320,7 @@ def test_stored_security_details_are_specific_to_each_email(
 def test_demo_compose_analyzes_and_routes_via_mail_service(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    query_param_values,
 ) -> None:
     """A composed demo mail uses the normal local analysis/routing workflow."""
 
@@ -368,8 +370,8 @@ def test_demo_compose_analyzes_and_routes_via_mail_service(
     app.run()
     assert not app.exception
     assert len(analysis_calls) == 1
-    assert app.query_params["view"] == ["cach_ly"]
-    assert app.query_params["mode"] == ["detail"]
+    assert query_param_values(app.query_params["view"]) == ["cach_ly"]
+    assert query_param_values(app.query_params["mode"]) == ["detail"]
     assert any("Account notice" in item.value for item in app.markdown)
     assert any("Please verify your account." in item.value for item in app.text)
 

@@ -14,6 +14,52 @@ from vietmailguard.v21 import research_synthetic_zh as research
 from vietmailguard.v21.paths import resolve_v21_paths
 
 
+def test_csv_limit_is_safe_for_windows_c_long_and_both_readers(tmp_path, monkeypatch):
+    original_limit = csv.field_size_limit()
+    real_limit = csv.field_size_limit
+    requested = []
+
+    def windows_32_bit_long_limit(value=None):
+        if value is None:
+            return real_limit()
+        if value > 2**31 - 1:
+            raise OverflowError("Python int too large to convert to C long")
+        requested.append(value)
+        return real_limit(value)
+
+    monkeypatch.setattr(csv, "field_size_limit", windows_32_bit_long_limit)
+    try:
+        paths, _ = _fixture(tmp_path, monkeypatch)
+        manifest = research.audit_and_prepare(paths)
+        train_path = paths.processed / "research_synthetic_zh" / "train.csv"
+        frame = research._load_research_csv(train_path, "synthetic_train", manifest["output_sha256"]["train.csv"])
+        assert len(frame) == manifest["synthetic_train_rows"]
+        assert requested == [research.MAX_CSV_FIELD_SIZE, research.MAX_CSV_FIELD_SIZE]
+        assert 131_072 < research.MAX_CSV_FIELD_SIZE <= 2**31 - 1
+    finally:
+        real_limit(original_limit)
+
+
+def test_prepared_csv_accepts_large_synthetic_fields_without_sys_maxsize(tmp_path):
+    original_limit = csv.field_size_limit()
+    path = tmp_path / "synthetic_train.csv"
+    row = {field: "" for field in research.RESEARCH_FIELDS}
+    row.update(source=research.SOURCE_NAME, body="离线合成邮件" * 40_000,
+               data_origin="synthetic", language="zh", label_status="weak_label",
+               training_eligible="false", label="normal", final_group_id="synthetic-group",
+               research_split="synthetic_train")
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=research.RESEARCH_FIELDS)
+        writer.writeheader()
+        writer.writerow(row)
+    try:
+        csv.field_size_limit(131_072)
+        frame = research._load_research_csv(path, "synthetic_train", hashlib.sha256(path.read_bytes()).hexdigest())
+        assert frame.iloc[0]["body"] == row["body"]
+    finally:
+        csv.field_size_limit(original_limit)
+
+
 def _fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple:
     paths = resolve_v21_paths(project_root=tmp_path, environ={})
     raw = paths.raw / "research_synthetic_zh"

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import json
-import socket
 import sys
 from pathlib import Path
 
@@ -22,12 +21,8 @@ sys.path.insert(0, str(ROOT / "app"))
 
 
 @pytest.fixture(autouse=True)
-def offline(monkeypatch):
-    def forbidden(*args, **kwargs):
-        raise AssertionError("Dashboard must not access the network")
-
-    monkeypatch.setattr(socket.socket, "connect", forbidden)
-    monkeypatch.setattr(socket, "create_connection", forbidden)
+def offline(no_external_network):
+    """Keep aggregate tests offline; UI tests explicitly opt in to loopback."""
 
 
 def write_artifact(root: Path, name: str, document: dict) -> Path:
@@ -35,6 +30,42 @@ def write_artifact(root: Path, name: str, document: dict) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(document), encoding="utf-8")
     return path
+
+
+@pytest.fixture
+def synthetic_dashboard_artifacts(tmp_path, monkeypatch):
+    import research_dashboard_ui as ui
+
+    metrics = {
+        "rows": 10, "normal_false_positives": 2, "non_normal_false_positives": 1,
+        "confusion_matrix": [[3, 1, 0], [1, 2, 0], [1, 0, 2]],
+        "per_class": {"normal": {"support": 4}, "spam": {"support": 3}, "phishing": {"support": 3}},
+    }
+    write_artifact(tmp_path, "development", {
+        "scope": "development_validation_only", "validation_rows": 10,
+        "candidates": [{"candidate": "synthetic_tfidf", "family": "tfidf", "metrics": metrics}],
+    })
+    write_artifact(tmp_path, "bootstrap", {
+        "mode": "development_bootstrap", "output_rows": {"train": 8, "validation": 2, "master": 10},
+        "by_split_language_label": [
+            {"split": "train", "language": "en", "label": "normal", "rows": 4},
+            {"split": "train", "language": "vi", "label": "spam", "rows": 2},
+            {"split": "train", "language": "en", "label": "phishing", "rows": 2},
+        ],
+        "development_training_ready": True, "final_evaluation_ready": False,
+    })
+    write_artifact(tmp_path, "trec_split", {"raw_labels": {"ham": 6, "spam": 6},
+                                           "quality_accepted": 12})
+    write_artifact(tmp_path, "trec_validation", {
+        "experiment": "trec06c_binary", "test_evaluated": False,
+        "candidates": [{"candidate": "synthetic_binary", "metrics": {
+            "per_class": {"ham": {"support": 2}, "spam": {"support": 2}},
+        }}],
+    })
+    ui._cached_artifacts.clear()
+    monkeypatch.setattr(ui, "load_research_artifacts", lambda _root: load_research_artifacts(tmp_path))
+    yield
+    ui._cached_artifacts.clear()
 
 
 def test_missing_sections_are_absent_not_zero_or_success(tmp_path):
@@ -136,7 +167,9 @@ def test_curation_status_counts_have_strict_aggregate_columns(tmp_path):
 
 @pytest.mark.parametrize("language", ["en", "vi"])
 @pytest.mark.parametrize("page", ["dataset_dashboard", "model_dashboard"])
-def test_actual_pages_render_offline_without_email_rows_or_model_loads(monkeypatch, language, page):
+def test_actual_pages_render_offline_without_email_rows_or_model_loads(
+    monkeypatch, language, page, streamlit_loopback, synthetic_dashboard_artifacts,
+):
     original = io.open
 
     def guarded(file, *args, **kwargs):
@@ -170,16 +203,15 @@ def test_actual_pages_render_offline_without_email_rows_or_model_loads(monkeypat
                    for frame in tables for value in frame.astype(str).to_numpy().flat)
     if page == "model_dashboard":
         label = t("rd_normal_to_other", language)
-        if (ROOT / ARTIFACT_PATHS["development"]).exists():
-            row = next(frame for frame in tables if label in frame and t("rd_candidate", language) in frame)
-            actual = next(value for _, value in row.iterrows()
-                          if value[t("rd_candidate", language)] == "tfidf_word_character_linear_svm")
-            assert actual[label] == 3
-            assert actual[t("rd_other_to_normal", language)] == 20
+        row = next(frame for frame in tables if label in frame and t("rd_candidate", language) in frame)
+        actual = next(value for _, value in row.iterrows()
+                      if value[t("rd_candidate", language)] == "synthetic_tfidf")
+        assert actual[label] == 1
+        assert actual[t("rd_other_to_normal", language)] == 2
 
 
 @pytest.mark.parametrize("renderer", ["render_dataset_research", "render_model_research"])
-def test_source_only_missing_artifacts_still_render(tmp_path, renderer):
+def test_source_only_missing_artifacts_still_render(tmp_path, renderer, streamlit_loopback):
     script = (
         "import sys\nfrom pathlib import Path\n"
         f"sys.path.insert(0, {str(ROOT / 'app')!r})\n"
