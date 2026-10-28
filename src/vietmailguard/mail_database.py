@@ -22,11 +22,11 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATABASE_PATH = PROJECT_ROOT / "data" / "runtime" / "vietmailguard_mail.db"
-CURRENT_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
 
 ALLOWED_FOLDERS = ("hop_thu_den", "thu_rac", "cach_ly", "da_xoa")
 ALLOWED_PREDICTIONS = ("normal", "spam", "phishing")
-ALLOWED_LANGUAGES = ("en", "vi", "mixed", "unknown")
+ALLOWED_LANGUAGES = ("en", "vi", "zh", "mixed", "unknown")
 ALLOWED_RISK_LEVELS = ("LOW", "MEDIUM", "HIGH", "CRITICAL")
 
 TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
@@ -83,6 +83,10 @@ TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
         "ly_do",
         "thoi_gian_thay_doi",
     ),
+    "danh_gia_llm": (
+        "id_danh_gia", "id_thu", "id_phan_tich", "nha_cung_cap",
+        "nhan_danh_gia", "trang_thai", "ket_qua_json", "thoi_gian_tao",
+    ),
 }
 
 REQUIRED_INDEXES = (
@@ -92,6 +96,7 @@ REQUIRED_INDEXES = (
     "chi_muc_phan_tich_thu_id_thu",
     "chi_muc_phan_tich_thu_nhan_du_doan",
     "chi_muc_phan_tich_thu_diem_rui_ro",
+    "chi_muc_danh_gia_llm_id_thu",
 )
 
 _CREATE_VERSION_TABLE = """
@@ -196,6 +201,63 @@ _VERSION_ONE_STATEMENTS = (
     "CREATE INDEX IF NOT EXISTS chi_muc_lich_su_id_thu ON lich_su_thu_muc(id_thu)",
 )
 
+_VERSION_TWO_STATEMENTS = (
+    """
+    CREATE TABLE phan_tich_thu_moi (
+        id_phan_tich INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_thu INTEGER NOT NULL,
+        phien_ban_mo_hinh TEXT NOT NULL,
+        ngon_ngu_phat_hien TEXT NOT NULL
+            CHECK (ngon_ngu_phat_hien IN ('en', 'vi', 'zh', 'mixed', 'unknown')),
+        nhan_du_doan TEXT NOT NULL
+            CHECK (nhan_du_doan IN ('normal', 'spam', 'phishing')),
+        do_tin_cay REAL CHECK (do_tin_cay IS NULL OR
+            (do_tin_cay >= 0.0 AND do_tin_cay <= 1.0)),
+        diem_rui_ro REAL NOT NULL CHECK (diem_rui_ro >= 0.0 AND diem_rui_ro <= 100.0),
+        muc_rui_ro TEXT NOT NULL CHECK (muc_rui_ro IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+        hanh_dong_goc TEXT NOT NULL,
+        hanh_dong_de_xuat TEXT NOT NULL,
+        co_canh_bao INTEGER NOT NULL DEFAULT 0 CHECK (co_canh_bao IN (0, 1)),
+        so_phat_hien_bao_mat INTEGER NOT NULL DEFAULT 0
+            CHECK (so_phat_hien_bao_mat >= 0),
+        ket_qua_json TEXT NOT NULL CHECK (json_valid(ket_qua_json)),
+        thoi_gian_phan_tich TEXT NOT NULL
+            DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        FOREIGN KEY (id_thu) REFERENCES thu(id_thu) ON DELETE CASCADE
+    )
+    """,
+    """
+    INSERT INTO phan_tich_thu_moi
+    SELECT id_phan_tich, id_thu, phien_ban_mo_hinh, ngon_ngu_phat_hien,
+           nhan_du_doan, do_tin_cay, diem_rui_ro, muc_rui_ro,
+           hanh_dong_goc, hanh_dong_de_xuat, co_canh_bao,
+           so_phat_hien_bao_mat, ket_qua_json, thoi_gian_phan_tich
+    FROM phan_tich_thu
+    """,
+    "DROP TABLE phan_tich_thu",
+    "ALTER TABLE phan_tich_thu_moi RENAME TO phan_tich_thu",
+    "CREATE INDEX chi_muc_phan_tich_thu_id_thu ON phan_tich_thu(id_thu)",
+    "CREATE INDEX chi_muc_phan_tich_thu_nhan_du_doan ON phan_tich_thu(nhan_du_doan)",
+    "CREATE INDEX chi_muc_phan_tich_thu_diem_rui_ro ON phan_tich_thu(diem_rui_ro)",
+    """
+    CREATE TABLE danh_gia_llm (
+        id_danh_gia INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_thu INTEGER NOT NULL,
+        id_phan_tich INTEGER NOT NULL,
+        nha_cung_cap TEXT NOT NULL,
+        nhan_danh_gia TEXT CHECK (nhan_danh_gia IS NULL OR
+            nhan_danh_gia IN ('normal', 'spam', 'phishing', 'review')),
+        trang_thai TEXT NOT NULL,
+        ket_qua_json TEXT NOT NULL CHECK (json_valid(ket_qua_json)),
+        thoi_gian_tao TEXT NOT NULL
+            DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        FOREIGN KEY (id_thu) REFERENCES thu(id_thu) ON DELETE CASCADE,
+        FOREIGN KEY (id_phan_tich) REFERENCES phan_tich_thu(id_phan_tich) ON DELETE CASCADE
+    )
+    """,
+    "CREATE INDEX chi_muc_danh_gia_llm_id_thu ON danh_gia_llm(id_thu, id_danh_gia)",
+)
+
 _savepoint_counter = itertools.count(1)
 
 
@@ -268,6 +330,13 @@ def initialize_schema(connection: sqlite3.Connection) -> int:
                 VALUES (?, ?)
                 """,
                 (1, utc_timestamp()),
+            )
+        if existing_version < 2:
+            for statement in _VERSION_TWO_STATEMENTS:
+                connection.execute(statement)
+            connection.execute(
+                "INSERT INTO phien_ban_co_so_du_lieu(phien_ban, thoi_gian_ap_dung) VALUES (?, ?)",
+                (2, utc_timestamp()),
             )
 
     return CURRENT_SCHEMA_VERSION

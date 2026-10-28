@@ -11,25 +11,16 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 APP_PATH = PROJECT_ROOT / "app" / "app.py"
 pytestmark = pytest.mark.production_artifact
 
-DATASET_DASHBOARD_ARTIFACTS = [
-    PROJECT_ROOT / "data" / "splits" / "v2" / f"{name}.csv"
-    for name in ("train", "validation", "test")
-] + [
-    PROJECT_ROOT / "data" / "curated" / "v2" / "Vietnamese_Curated_Dataset.csv",
-    PROJECT_ROOT / "data" / "processed" / "Vietnamese_Translated_Augmentation.csv",
-]
-
-
 def test_all_streamlit_pages_render_saved_artifacts() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=90).run()
     assert not app.exception
     assert any("VietMailGuard Mail" in item.value for item in app.markdown)
 
-    app.switch_page("pages/email_analyzer.py").run(timeout=90)
+    app.switch_page("views/email_analyzer.py").run(timeout=90)
     assert not app.exception
     assert [button.label for button in app.main.button] == ["Analyze Email"]
 
-    app.switch_page("pages/model_dashboard.py").run(timeout=90)
+    app.switch_page("views/model_dashboard.py").run(timeout=90)
     assert not app.exception
     saved_metrics = json.loads(
         (
@@ -49,20 +40,26 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
         "No Vietnamese phishing examples" in warning.value for warning in app.warning
     )
 
-    app.switch_page("pages/dataset_dashboard.py").run(timeout=90)
+    app.switch_page("views/dataset_dashboard.py").run(timeout=90)
     assert not app.exception
-    if all(path.exists() for path in DATASET_DASHBOARD_ARTIFACTS):
-        displayed_metrics = {metric.label: metric.value for metric in app.metric}
-        assert displayed_metrics["Master samples"] == "44,717"
-        assert displayed_metrics["English training samples"] == "42,112"
-        assert displayed_metrics["Translated Vietnamese training samples"] == "2,605"
-        assert displayed_metrics["Review rows"] == "1,330"
-        assert displayed_metrics["Cross-split leakage check"] == "PASSED"
+    report_path = PROJECT_ROOT / "reports/v2/bilingual_dataset_report.md"
+    if report_path.exists():
+        saved_report = report_path.read_text(encoding="utf-8")
+        assert saved_report.strip() in [item.value.strip() for item in app.markdown]
     else:
-        assert app.warning
-        assert any("not available" in warning.value.casefold() for warning in app.warning)
+        assert app.info
+    assert any("V2.1 Research Preview" == item.label for item in app.tabs)
+    manifest_path = PROJECT_ROOT / "data/v21/splits/development_bootstrap/manifest.json"
+    if manifest_path.exists():
+        saved = json.loads(manifest_path.read_text(encoding="utf-8"))
+        counts = next(item.value for item in app.dataframe if "Measure" in item.value)
+        assert counts.set_index("Measure")["Rows"].to_dict() == {
+            "Train": saved["output_rows"]["train"],
+            "Validation": saved["output_rows"]["validation"],
+            "Development master": saved["output_rows"]["master"],
+        }
 
-    app.switch_page("pages/methodology.py").run(timeout=90)
+    app.switch_page("views/methodology.py").run(timeout=90)
     assert not app.exception
     assert "Risk engine" in [subheader.value for subheader in app.subheader]
     assert "Known limitations" in [subheader.value for subheader in app.subheader]
@@ -72,7 +69,7 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
 
 def test_language_switch_preserves_inference_result() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
-    app.switch_page("pages/email_analyzer.py").run(timeout=90)
+    app.switch_page("views/email_analyzer.py").run(timeout=90)
     app.text_input[0].set_value("project.manager@example.org")
     app.text_input[1].set_value("Project meeting notes")
     app.text_area[0].set_value(
@@ -87,14 +84,16 @@ def test_language_switch_preserves_inference_result() -> None:
     assert not app.exception
     assert before["prediction"] == after["prediction"] == "normal"
     assert before["confidence"] == after["confidence"]
-    assert [button.label for button in app.main.button] == ["Phân tích Email"]
+    controls = {button.key: button.label for button in app.main.button}
+    assert controls["quick_analyze_button"] == "Phân tích Email"
+    assert controls["quick_save_to_mailbox"] == "Lưu email đã phân tích vào hộp thư"
     displayed_metrics = {metric.label: metric.value for metric in app.metric}
     assert displayed_metrics["Hành động đề xuất"] == "Cho phép"
 
 
 def test_analyzer_shows_v2_metadata_and_separate_explanations() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
-    app.switch_page("pages/email_analyzer.py").run(timeout=90)
+    app.switch_page("views/email_analyzer.py").run(timeout=90)
     app.text_input[1].set_value("Account alert")
     app.text_area[0].set_value(
         "Your account is locked. Verify your password at http://192.0.2.10/login."
@@ -171,7 +170,7 @@ def test_required_v2_ui_language_and_email_scenarios() -> None:
         ),
     ]
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
-    app.switch_page("pages/email_analyzer.py").run(timeout=90)
+    app.switch_page("views/email_analyzer.py").run(timeout=90)
     for interface, subject, body, detected, prediction, action in scenarios:
         app.selectbox[0].set_value(interface).run(timeout=90)
         app.text_input[0].set_value("sender@example.com")

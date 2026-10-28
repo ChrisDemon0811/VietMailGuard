@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import sqlite3
 import unicodedata
 from collections.abc import Callable, Mapping
@@ -153,6 +154,147 @@ class MailService:
             "routing": self._routing_payload(decision),
         }
 
+    def save_analyzed_email(
+        self,
+        *,
+        analysis_result: Mapping[str, Any],
+        sender: object = "",
+        receiver: object = "",
+        cc: object = "",
+        subject: object = "",
+        body: object = "",
+        sent_at: str | None = None,
+        source: str = "quick_analyzer",
+        source_id: str | None = None,
+        external_id: str | None = None,
+        llm_review: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Persist an already computed, server-side result without inference.
+
+        Callers must supply the exact input snapshot that produced the result,
+        not current editable draft fields. This is not an import API for
+        untrusted user-supplied prediction JSON. The default identifier binds
+        content and the exact analysis so repeated Save clicks are idempotent;
+        it never silently replaces a prior model's historical result.
+        """
+        if not _fingerprint_text(subject) and not _fingerprint_text(body):
+            raise ValueError("An analyzed email must contain a subject or body")
+        analysis = self._validated_analysis_snapshot(analysis_result)
+        decision = route_analysis(analysis)
+        review_snapshot = self._validated_review_snapshot(
+            llm_review, analysis, sender=sender, subject=subject, body=body,
+        )
+        fingerprint = email_fingerprint({
+            "sender": sender, "receiver": receiver, "cc": cc,
+            "date": sent_at, "subject": subject, "body": body,
+        })
+        result_digest = hashlib.sha256(json.dumps(
+            analysis, ensure_ascii=False, sort_keys=True, allow_nan=False,
+        ).encode("utf-8")).hexdigest()
+        stable_external_id = external_id or f"analyzed-sha256:{fingerprint}:{result_digest}"
+        with self.repository.atomic():
+            existing = self.repository.get_email_by_external_id(stable_external_id)
+            if existing is not None:
+                result = self._existing_email_result(existing)
+                if (review_snapshot is not None and result["analysis"] is not None
+                        and result["analysis"]["result"] == analysis):
+                    latest_review = self.repository.get_latest_llm_review(
+                        existing["id"], result["analysis_id"],
+                    )
+                    if latest_review is None or latest_review["result"] != review_snapshot:
+                        self.repository.save_llm_review(
+                            existing["id"], result["analysis_id"], review_snapshot,
+                        )
+                return result
+            email_id = self.repository.create_email(
+                sender=sender, receiver=receiver, cc=cc, subject=subject,
+                body=body, sent_at=sent_at, source=source,
+                source_id=source_id or fingerprint, external_id=stable_external_id,
+                folder="hop_thu_den",
+            )
+            if decision.folder != "hop_thu_den":
+                self.repository.move_email(email_id, decision.folder, reason=decision.reason)
+            analysis_id = self._save_analysis(email_id, analysis, decision)
+            if review_snapshot is not None:
+                self.repository.save_llm_review(email_id, analysis_id, review_snapshot)
+        return {
+            "email": self.repository.get_email(email_id),
+            "analysis": self.repository.get_latest_analysis(email_id),
+            "analysis_id": analysis_id, "created": True, "duplicate": False,
+            "routing": self._routing_payload(decision),
+        }
+
+    @staticmethod
+    def _validated_analysis_snapshot(result: Mapping[str, Any]) -> dict[str, Any]:
+        """Reject incomplete/non-finite results, not fabricate missing metadata."""
+        if not isinstance(result, Mapping):
+            raise ValueError("A server-side inference result is required")
+        required = {"model_version", "detected_language", "prediction", "confidence",
+                    "risk_score", "risk_level"}
+        if not required <= result.keys() or not str(result.get("model_version", "")).strip():
+            raise ValueError("The inference result is incomplete")
+        try:
+            snapshot = json.loads(json.dumps(dict(result), ensure_ascii=False, allow_nan=False))
+        except (TypeError, ValueError) as error:
+            raise ValueError("The inference result is not valid finite JSON") from error
+        for field, upper in (("confidence", 1), ("risk_score", 100)):
+            value = snapshot[field]
+            if field == "confidence" and value is None:
+                continue
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or not 0 <= value <= upper):
+                raise ValueError(f"Invalid inference {field}")
+        probabilities = snapshot.get("class_probabilities", {})
+        if not isinstance(probabilities, dict):
+            raise ValueError("Invalid class probabilities")
+        if probabilities and (
+            set(probabilities) != {"normal", "spam", "phishing"}
+            or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                   or not math.isfinite(value) or not 0 <= value <= 1
+                   for value in probabilities.values())
+            or not math.isclose(sum(probabilities.values()), 1.0, abs_tol=1e-6)
+        ):
+            raise ValueError("Invalid class probabilities")
+        if snapshot.get("probability_source") == "unavailable_uncalibrated" and (
+            snapshot["confidence"] is not None or probabilities
+        ):
+            raise ValueError("Uncalibrated inference cannot contain probabilities")
+        return snapshot
+
+    @staticmethod
+    def _validated_review_snapshot(
+        review: Mapping[str, Any] | None, analysis: Mapping[str, Any],
+        *, sender: object, subject: object, body: object,
+    ) -> dict[str, Any] | None:
+        """Bind optional reviewer history to exactly the saved ML result."""
+        if review is None:
+            return None
+        from vietmailguard.v21.llm_reviewer import (
+            MAX_EMAIL_FIELD_CHARS, ReviewRequest, validate_review_response,
+        )
+        if (not isinstance(review, Mapping) or review.get("schema_version") != 1
+                or review.get("ml_result") != analysis):
+            raise ValueError("Reviewer history does not match the saved ML result")
+        reviewer = review.get("reviewer")
+        if not isinstance(reviewer, Mapping) or reviewer.get("calibrated_probability") is not None:
+            raise ValueError("Invalid reviewer history")
+        if reviewer.get("status") in {"ok", "mock_only"}:
+            validate_review_response(
+                {key: reviewer.get(key) for key in (
+                    "assessment", "summary", "evidence", "suspicious_indicators")},
+                ReviewRequest(str(sender or "")[:MAX_EMAIL_FIELD_CHARS],
+                              str(subject or "")[:MAX_EMAIL_FIELD_CHARS],
+                              str(body or "")[:MAX_EMAIL_FIELD_CHARS]),
+            )
+        elif reviewer.get("status") not in {
+            "disabled", "empty_input", "invalid_response", "deadline_exceeded", "provider_error",
+        } or reviewer.get("assessment") is not None:
+            raise ValueError("Invalid reviewer failure status")
+        try:
+            return json.loads(json.dumps(dict(review), ensure_ascii=False, allow_nan=False))
+        except (TypeError, ValueError) as error:
+            raise ValueError("Reviewer history is not valid finite JSON") from error
+
     def import_eml_bytes(
         self,
         eml_data: bytes,
@@ -300,6 +442,8 @@ class MailService:
         return {
             "email": email,
             "analysis": analysis,
+            "llm_review": self.repository.get_latest_llm_review(
+                email_id, None if analysis is None else analysis["id"]),
             "routing": (
                 None
                 if analysis is None
@@ -307,6 +451,29 @@ class MailService:
             ),
             "folder_history": self.repository.list_folder_history(email_id),
         }
+
+    def review_stored_email(self, email_id: int, *, provider: Any,
+                            allow_external: bool = False,
+                            explicit_email_sharing_consent: bool = False,
+                            timeout_seconds: float = 5.0,
+                            max_retries: int = 1) -> dict[str, Any]:
+        """On-demand LLM review; append history, never reroute or recompute ML."""
+        from vietmailguard.v21.llm_reviewer import review_email
+
+        email = self.repository.get_email(email_id)
+        analysis = self.repository.get_latest_analysis(email_id)
+        if email is None or analysis is None:
+            raise MailNotFoundError("Stored email or analysis is unavailable")
+        result = review_email(
+            sender=email["sender"], subject=email["subject"], body=email["body"],
+            ml_result=analysis["result"], provider=provider,
+            allow_external=allow_external,
+            explicit_email_sharing_consent=explicit_email_sharing_consent,
+            timeout_seconds=timeout_seconds, max_retries=max_retries,
+        )
+        with self.repository.atomic():
+            review_id = self.repository.save_llm_review(email_id, analysis["id"], result)
+        return {"id": review_id, "result": result}
 
     def mark_read(self, email_id: int, is_read: bool = True) -> dict[str, Any]:
         """Update read state and audit a genuine user-visible state change."""
@@ -437,7 +604,8 @@ class MailService:
             model_version=str(analysis.get("model_version", "unknown")),
             detected_language=str(analysis.get("detected_language", "unknown")),
             prediction=prediction,
-            confidence=float(analysis.get("confidence", 0.0)),
+            confidence=(None if analysis.get("confidence") is None
+                        else float(analysis["confidence"])),
             risk_score=float(analysis.get("risk_score", 0.0)),
             risk_level=str(analysis.get("risk_level", "LOW")),
             base_recommended_action=decision.base_action,

@@ -10,8 +10,14 @@ import pandas as pd
 import streamlit as st
 
 from i18n import action_label, category_label, class_label, risk_label, t
+from mailbox_ui import select_mailbox_message
+from runtime_ui import (
+    configured_mailbox_path, create_selected_reviewer, draft_input,
+    render_reviewer_result, reviewer_controls, reviewer_request_options,
+)
 from styles import render_page_header
 from vietmailguard.eml_parser import parse_eml_bytes
+from vietmailguard.mail_service import MailService
 from vietmailguard.inference import (
     DEFAULT_METADATA_PATH,
     DEFAULT_MODEL_PATH,
@@ -19,6 +25,9 @@ from vietmailguard.inference import (
     DEFAULT_SECURITY_CONFIG_PATH,
     load_inference_engine,
 )
+from vietmailguard.v21.runtime_modes import V2_MODE, V21_HYBRID_MODE
+from vietmailguard.v21.runtime_inference import load_v21_engine
+from vietmailguard.v21.llm_reviewer import review_email
 
 _RESULT_STATE_KEY = "vietmailguard_analysis_result"
 
@@ -53,6 +62,12 @@ def _production_engine() -> Any:
     return _cached_production_engine(_artifact_signature())
 
 
+def _selected_engine() -> Any:
+    if st.session_state.get("analysis_mode", V2_MODE) == V2_MODE:
+        return _production_engine()
+    return load_v21_engine()
+
+
 def _language() -> str:
     return str(st.session_state.get("interface_language", "en"))
 
@@ -74,14 +89,19 @@ def _submit_analysis(
     if eml_bytes is not None:
         try:
             parsed = parse_eml_bytes(eml_bytes)
-        except (TypeError, ValueError, UnicodeError) as exc:
+        except (TypeError, ValueError, UnicodeError, LookupError) as exc:
             raise _EmlParseError from exc
         if not any(str(parsed.get(field, "")).strip() for field in ("sender", "subject", "body")):
             raise _EmlParseError
-    effective_sender = sender.strip() or (parsed or {}).get("sender", "")
-    effective_subject = subject.strip() or (parsed or {}).get("subject", "")
-    effective_body = body.strip() or (parsed or {}).get("body", "")
-    result = _production_engine().analyze_email(
+    # An attached EML is one complete input, not a patch for an older draft.
+    # Never analyze a hybrid of yesterday's manual body and today's MIME headers.
+    if parsed is not None:
+        effective_sender = parsed.get("sender", "")
+        effective_subject = parsed.get("subject", "")
+        effective_body = parsed.get("body", "")
+    else:
+        effective_sender, effective_subject, effective_body = sender.strip(), subject.strip(), body.strip()
+    result = _selected_engine().analyze_email(
         sender=effective_sender,
         subject=effective_subject,
         body=effective_body,
@@ -90,6 +110,10 @@ def _submit_analysis(
         "result": result,
         "parsed_eml": parsed,
         "input_source": "eml" if parsed is not None else "manual",
+        "analysis_mode": str(st.session_state.get("analysis_mode", V2_MODE)),
+        "email_fields": {
+            "sender": effective_sender, "subject": effective_subject, "body": effective_body,
+        },
     }
 
 
@@ -128,7 +152,7 @@ def _render_prediction_summary(result: dict[str, Any], language: str) -> None:
     with confidence_column:
         with st.container(border=True):
             st.markdown(
-                f'<p class="vmg-confidence-kicker">{escape(t("model_output_kicker", language))}</p>',
+                f'<p class="vmg-confidence-kicker">{escape(t("model_output_kicker" if confidence is not None else "model_output_uncalibrated_kicker", language))}</p>',
                 unsafe_allow_html=True,
             )
             display_confidence = (
@@ -139,7 +163,8 @@ def _render_prediction_summary(result: dict[str, Any], language: str) -> None:
             st.metric(t("model_confidence", language), display_confidence)
             if confidence is not None:
                 st.progress(float(confidence))
-            st.caption(t("model_confidence_help", language))
+            st.caption(t("model_confidence_help" if confidence is not None
+                         else "confidence_unavailable", language))
     with risk_column:
         with st.container(border=True):
             st.markdown(
@@ -148,7 +173,7 @@ def _render_prediction_summary(result: dict[str, Any], language: str) -> None:
             )
             st.metric(t("risk_score", language), f"{risk_score}/100")
             st.progress(risk_score)
-            st.caption(t("risk_score_help", language))
+            st.caption(t("risk_score_help" if confidence is not None else "risk_score_uncalibrated_help", language))
 
     risk_column, action_column = st.columns(2, gap="large")
     risk_column.metric(t("risk_level", language), risk_label(risk_level, language))
@@ -319,34 +344,52 @@ def _render_parsed_metadata(payload: dict[str, Any], language: str) -> None:
 def render() -> None:
     """Render the Email Analyzer page."""
     language = _language()
+    is_v2 = st.session_state.get("analysis_mode", V2_MODE) == V2_MODE
     render_page_header(
-        t("email_analyzer_title", language), t("email_analyzer_intro", language)
+        t("email_analyzer_title", language),
+        t("email_analyzer_intro" if is_v2 else "email_analyzer_v21_intro", language),
     )
-    st.info(t("model_scope_notice", language))
+    if st.session_state.get("analysis_mode", V2_MODE) == V2_MODE:
+        st.info(t("model_scope_notice", language))
+    else:
+        st.info(t("v21_development_notice", language))
     with st.container(border=True):
         st.markdown(f"**{t('known_limitations_title', language)}**")
-        st.markdown(t("known_limitations_compact", language))
+        st.markdown(t("known_limitations_compact" if is_v2 else "known_limitations_v21", language))
 
-    with st.form("email_analysis_form", clear_on_submit=False):
-        sender = st.text_input(
+    st.caption(t("quick_draft_notice", language))
+    with st.container(border=True):
+        sender = draft_input(
+            "quick", "sender",
             t("sender", language), placeholder=t("sender_placeholder", language)
         )
-        subject = st.text_input(
+        subject = draft_input(
+            "quick", "subject",
             t("subject", language), placeholder=t("subject_placeholder", language)
         )
-        body = st.text_area(
+        body = draft_input(
+            "quick", "body",
             t("email_body", language),
+            multiline=True,
             placeholder=t("body_placeholder", language),
             height=210,
         )
         uploaded = st.file_uploader(
-            t("eml_upload", language), type=["eml"], help=t("eml_help", language)
+            t("eml_upload", language), type=["eml"], help=t("eml_help", language),
+            key="quick_eml_upload",
         )
-        submitted = st.form_submit_button(
-            t("analyze_email", language), type="primary", width="stretch"
+        if uploaded is not None:
+            st.caption(t("eml_selected_input", language))
+        submitted = st.button(
+            t("analyze_email", language), type="primary", width="stretch",
+            key="quick_analyze_button",
         )
 
     if submitted:
+        # A failed new submission must not display a previous mail's prediction.
+        st.session_state.pop(_RESULT_STATE_KEY, None)
+        st.session_state.pop("vietmailguard_llm_review", None)
+        st.session_state["quick_llm_consent"] = False
         try:
             with st.spinner(t("analyzing", language)):
                 payload = _submit_analysis(
@@ -368,9 +411,39 @@ def render() -> None:
     payload = st.session_state.get(_RESULT_STATE_KEY)
     if not isinstance(payload, dict) or not isinstance(payload.get("result"), dict):
         return
+    if payload.get("analysis_mode", V2_MODE) != st.session_state.get("analysis_mode", V2_MODE):
+        st.info(t("analyze_email", language))
+        return
     _render_parsed_metadata(payload, language)
     result = payload["result"]
     _render_prediction_summary(result, language)
+    st.caption(t("quick_analyzed_input", language))
+    save_column, open_column = st.columns(2)
+    with save_column:
+        if st.button(t("quick_save_to_mailbox", language), key="quick_save_to_mailbox"):
+            try:
+                fields = payload["email_fields"]
+                parsed = payload.get("parsed_eml") or {}
+                with MailService.from_database_path(configured_mailbox_path()) as service:
+                    saved = service.save_analyzed_email(
+                        analysis_result=result, sender=fields["sender"],
+                        subject=fields["subject"], body=fields["body"],
+                        receiver=parsed.get("receiver", ""),
+                        sent_at=parsed.get("date") or None,
+                        llm_review=st.session_state.get("vietmailguard_llm_review"),
+                    )
+                payload["saved_email_id"] = saved["email"]["id"]
+                payload["saved_folder"] = saved["email"]["folder"]
+                st.success(t("quick_saved", language))
+            except Exception:
+                st.error(t("quick_save_error", language))
+    with open_column:
+        if payload.get("saved_email_id") and st.button(
+            t("quick_open_saved", language), key="quick_open_saved",
+        ):
+            folder = payload["saved_folder"]
+            select_mailbox_message(st.session_state, payload["saved_email_id"], folder)
+            st.switch_page("views/mail_client.py", query_params={"view": folder, "mode": "detail"})
     st.divider()
     st.subheader(t("why_title", language))
     st.markdown(f"### A. {t('model_explanation_section', language)}")
@@ -379,6 +452,38 @@ def render() -> None:
     _render_security_findings(result, language)
     st.markdown(f"### C. {t('url_findings_section', language)}")
     _render_urls(result, language)
+    if st.session_state.get("analysis_mode", V2_MODE) == V21_HYBRID_MODE:
+        st.divider()
+        st.subheader(t("llm_reviewer_title", language))
+        can_review, external = reviewer_controls(language, consent_key="quick_llm_consent")
+        if st.button(t("llm_reviewer_run" if external else "reviewer_mock_run", language), disabled=not can_review,
+                     key="quick_llm_review_button"):
+            try:
+                fields = payload["email_fields"]
+                provider = create_selected_reviewer()
+                with st.spinner(t("reviewer_running", language)):
+                    if payload.get("saved_email_id"):
+                        with MailService.from_database_path(configured_mailbox_path()) as service:
+                            reviewed = service.review_stored_email(
+                                payload["saved_email_id"], provider=provider,
+                                allow_external=external,
+                                explicit_email_sharing_consent=bool(external and can_review),
+                                **reviewer_request_options(),
+                            )["result"]
+                    else:
+                        reviewed = review_email(
+                            sender=fields["sender"], subject=fields["subject"], body=fields["body"],
+                            ml_result=result, provider=provider,
+                            allow_external=external,
+                            explicit_email_sharing_consent=bool(external and can_review),
+                            **reviewer_request_options(),
+                        )
+                st.session_state["vietmailguard_llm_review"] = reviewed
+            except Exception:
+                st.error(t("llm_reviewer_error", language))
+        reviewed = st.session_state.get("vietmailguard_llm_review")
+        if isinstance(reviewed, dict):
+            render_reviewer_result(reviewed, language)
 
 
 render()

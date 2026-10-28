@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -15,14 +16,26 @@ for import_root in (PROJECT_ROOT, SOURCE_ROOT, APP_ROOT):
 
 import streamlit as st
 
+# A long-running Streamlit process can retain a pre-update UI module even when
+# the page scripts are new. Refresh only this side-effect-free presentation
+# module before pages import their required helpers; keep models/caches and
+# session state untouched.
+import runtime_ui
+
+if not callable(getattr(runtime_ui, "reviewer_request_options", None)):
+    runtime_ui = importlib.reload(runtime_ui)
+
 from i18n import SUPPORTED_LANGUAGES, t
 from mailbox_ui import sync_mailbox_navigation
+from runtime_ui import configured_mailbox_path, render_reviewer_selector
 from styles import apply_global_styles
 from vietmailguard.mail_service import MailService
+from vietmailguard.v21.runtime_inference import model_availability
+from vietmailguard.v21.runtime_modes import V2_MODE, V21_ML_MODE, V21_HYBRID_MODE
 
 st.set_page_config(
     page_title="VietMailGuard Mail",
-    page_icon=":material/security:",
+    page_icon=str(APP_ROOT / "assets" / "mail.svg"),
     layout="wide",
     initial_sidebar_state="auto",
 )
@@ -33,32 +46,32 @@ if "interface_language" not in st.session_state:
 
 language = str(st.session_state["interface_language"])
 mail_page = st.Page(
-    "pages/mail_client.py",
+    "views/mail_client.py",
     title=t("nav_mail_client", language),
     icon=":material/security:",
     url_path="mail",
     default=True,
 )
 quick_analyzer_page = st.Page(
-    "pages/email_analyzer.py",
+    "views/email_analyzer.py",
     title=t("nav_email_analyzer", language),
     icon=":material/troubleshoot:",
     url_path="quick-analyzer",
 )
 model_page = st.Page(
-    "pages/model_dashboard.py",
+    "views/model_dashboard.py",
     title=t("nav_model_dashboard", language),
     icon=":material/model_training:",
     url_path="model-dashboard",
 )
 dataset_page = st.Page(
-    "pages/dataset_dashboard.py",
+    "views/dataset_dashboard.py",
     title=t("nav_dataset_dashboard", language),
     icon=":material/dataset:",
     url_path="dataset-dashboard",
 )
 methodology_page = st.Page(
-    "pages/methodology.py",
+    "views/methodology.py",
     title=t("nav_methodology", language),
     icon=":material/menu_book:",
     url_path="methodology",
@@ -71,7 +84,7 @@ navigation = st.navigation(
 with st.sidebar:
     st.markdown(f"### {t('nav_mail_client', language)}")
     try:
-        with MailService.from_database_path() as mail_service:
+        with MailService.from_database_path(configured_mailbox_path()) as mail_service:
             mailbox_counts = mail_service.mailbox_counts()
     except Exception:  # pragma: no cover - environment-dependent UI boundary
         mailbox_counts = None
@@ -143,5 +156,25 @@ with st.sidebar:
         key="language_selector",
     )
     st.session_state["interface_language"] = language
+    v21_available, _ = model_availability()
+    modes = [V2_MODE]
+    if v21_available:
+        modes.extend([V21_ML_MODE, V21_HYBRID_MODE])
+    selected_mode = st.session_state.get(
+        "analysis_mode_selector", st.session_state.get("analysis_mode", V2_MODE)
+    )
+    if selected_mode not in modes:
+        selected_mode = V2_MODE
+    st.session_state["analysis_mode_selector"] = selected_mode
+    st.selectbox(
+        t("analysis_mode", language), options=modes,
+        format_func=lambda value: t(f"mode_{value}", language),
+        key="analysis_mode_selector",
+    )
+    st.session_state["analysis_mode"] = st.session_state["analysis_mode_selector"]
+    if not v21_available:
+        st.caption(t("mode_v21_unavailable", language))
+    if st.session_state["analysis_mode"] == V21_HYBRID_MODE:
+        render_reviewer_selector(language)
 
 navigation.run()

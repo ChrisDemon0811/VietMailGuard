@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "taxonomy": ["normal", "spam", "phishing"],
+  "statuses": ["eligible", "review", "exclude", "weak_label"],
+  "manual_rule_id": "human_content_review_v21",
+  "review_sample_per_source_label": 5,
+  "sources": {
+    "enron_original": {
+      "raw_labels": {"": "review"},
+      "automatic_mapping_enabled": false,
+      "reason": "Original archive has no verified per-message label; corporate origin is not a normal label."
+    },
+    "trec06c": {
+      "raw_labels": {"ham": "weak_label", "spam": "weak_label"},
+      "automatic_mapping_enabled": false,
+      "reason": "TREC binary ham/spam does not establish VietMailGuard three-class semantics."
+    },
+    "merged_dataset": {
+      "raw_labels": {"0.0": "weak_label", "1.0": "weak_label", "": "review"},
+      "automatic_mapping_enabled": false,
+      "related_dataset": "balanced_dataset",
+      "reason": "Binary semantics and upstream provenance unverified; positive may mix spam, scam and phishing."
+    },
+    "balanced_dataset": {
+      "raw_labels": {"0.0": "weak_label", "1.0": "weak_label"},
+      "automatic_mapping_enabled": false,
+      "related_dataset": "merged_dataset",
+      "reason": "Representation of Merged corpus, not an independent training source."
+    },
+    "meajor": {
+      "raw_labels": {"0.0": "weak_label", "1.0": "weak_label", "": "review"},
+      "automatic_mapping_enabled": false,
+      "reason": "Subcorpus-specific label semantics and source/license provenance need verification."
+    },
+    "v2_reference": {
+      "raw_labels": {},
+      "automatic_mapping_enabled": false,
+      "manual_curation_enabled": false,
+      "reason": "Frozen read-only V2 overlap reference; includes V2 held-out rows. Never a V2.1 curation input."
+    }
+  },
+  "manual_evidence_required": ["reviewer", "evidence", "reviewed_at_utc"],
+  "notes": "No source-level automatic promotion is approved. Candidate labels and LLM predictions never create ground truth."
+}

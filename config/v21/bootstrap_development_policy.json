@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "mode": "development_bootstrap_only",
+  "source_splits": {
+    "train": "data/splits/v2/train.csv",
+    "validation": "data/splits/v2/validation.csv",
+    "test_guard": "data/splits/v2/test.csv"
+  },
+  "source_audit_index": "data/v21/cache/dedup_audit.sqlite3",
+  "source_curation_summary": "reports/v21/label_curation_summary.json",
+  "allowed_labels_by_provenance": {
+    "verified_legitimate_source": "normal",
+    "high_confidence_curated_spam": "spam",
+    "nazario_phishing": "phishing",
+    "translated_dataset_verified_normal": "normal",
+    "translated_from_high_confidence_curated_spam_parent": "spam",
+    "controlled_translation_from_verified_legitimate_source": "normal",
+    "controlled_translation_from_high_confidence_curated_spam": "spam",
+    "controlled_translation_from_nazario_phishing": "phishing"
+  },
+  "allowed_label_status": ["eligible", "evidence_confirmed"],
+  "allowed_languages": ["en", "vi"],
+  "frozen_test_role": "metadata_only_leakage_guard",
+  "bootstrap_output": "data/v21/curated/bootstrap_v2_development",
+  "final_test_available": false,
+  "notes": "Preserve V2 train/validation assignment and provenance. Never use V2 test labels/content for development, never call V2 validation an independent V2.1 final test. No V2.1 source weak/review row is promoted."
+}

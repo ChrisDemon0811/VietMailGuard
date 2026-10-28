@@ -21,4 +21,5 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 markers = [
     "production_artifact: requires the frozen models/v2_bilingual/production_pipeline.joblib release artifact",
+    "trec06c_real: optional integration smoke test requiring the configured 2025-123.zip archive",
 ]

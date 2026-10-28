@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "decision_state": "pending_user_confirmation",
+  "activation_policy": "No source rule is active. A later, separately authorized task must record the user's decision, verify quality and conflicts, and implement group-safe admission.",
+  "rules": [
+    {
+      "rule_id": "trec06c_ham_normal_proposal",
+      "dataset": "trec06c",
+      "raw_label": "ham",
+      "proposed_label": "normal",
+      "status": "pending_user",
+      "evidence": ["https://trec.nist.gov/pubs/trec15/papers/SPAM06.OVERVIEW.pdf", "reports/v21/trec06c_loader_report.md"],
+      "conditions": ["Human review of stratified complete messages", "Exclude decode/content failures", "Resolve exact/normalized/template and V2 overlap groups", "Confirm mailing-list ham fits normal taxonomy"]
+    },
+    {
+      "rule_id": "trec06c_spam_mixed_review",
+      "dataset": "trec06c",
+      "raw_label": "spam",
+      "proposed_label": null,
+      "status": "blocked_mixed_taxonomy",
+      "evidence": ["https://trec.nist.gov/pubs/trec15/papers/SPAM06.OVERVIEW.pdf", "reports/v21/label_curation_review_queue.csv"],
+      "conditions": ["Separate commercial spam from scams/phishing by content review", "Do not map binary spam to VietMailGuard spam en bloc"]
+    },
+    {
+      "rule_id": "enron_original_unlabeled_review",
+      "dataset": "enron_original",
+      "raw_label": "",
+      "proposed_label": null,
+      "status": "blocked_unlabeled",
+      "evidence": ["https://www.cs.cmu.edu/~enron/", "reports/v21/enron_original_loader_report.md"],
+      "conditions": ["Individual or verified subset review", "Do not equate corporate origin with normal", "Resolve V2 Enron overlap before any admission"]
+    },
+    {
+      "rule_id": "merged_negative_review",
+      "dataset": "merged_dataset",
+      "raw_label": "0.0",
+      "proposed_label": "normal",
+      "status": "pending_user",
+      "evidence": ["https://github.com/Manar-ibr/Phishing-Email-Detection-Dataset/blob/main/README.md", "reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Verify local file corresponds to published source/version", "Audit negative-class purity and short/empty content", "Use one canonical Merged/Balanced representation", "Resolve cross-source and V2 overlaps"]
+    },
+    {
+      "rule_id": "merged_positive_mixed_review",
+      "dataset": "merged_dataset",
+      "raw_label": "1.0",
+      "proposed_label": null,
+      "status": "blocked_mixed_taxonomy",
+      "evidence": ["https://github.com/Manar-ibr/Phishing-Email-Detection-Dataset/blob/main/README.md"],
+      "conditions": ["Original authors explicitly group spam, scam and phishing", "Requires per-message or verified sub-source three-class curation"]
+    },
+    {
+      "rule_id": "merged_missing_label_review",
+      "dataset": "merged_dataset",
+      "raw_label": "",
+      "proposed_label": null,
+      "status": "blocked_unlabeled",
+      "evidence": ["reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Missing raw label cannot be source-approved", "Preserve audit exclusion for empty content"]
+    },
+    {
+      "rule_id": "balanced_derived_review_0",
+      "dataset": "balanced_dataset",
+      "raw_label": "0.0",
+      "proposed_label": null,
+      "status": "blocked_derived_copy",
+      "evidence": ["https://github.com/Manar-ibr/Phishing-Email-Detection-Dataset/blob/main/README.md", "reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Do not count as independent of Merged", "Use canonical parent and group-level review"]
+    },
+    {
+      "rule_id": "balanced_derived_review_1",
+      "dataset": "balanced_dataset",
+      "raw_label": "1.0",
+      "proposed_label": null,
+      "status": "blocked_derived_copy",
+      "evidence": ["https://github.com/Manar-ibr/Phishing-Email-Detection-Dataset/blob/main/README.md", "reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Positive class mixes spam, scam and phishing", "Do not count as independent of Merged"]
+    },
+    {
+      "rule_id": "meajor_negative_subsource_review",
+      "dataset": "meajor",
+      "raw_label": "0.0",
+      "proposed_label": "normal",
+      "status": "pending_user",
+      "evidence": ["https://arxiv.org/html/2507.17978v2", "reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Verify local 108685-row subset/version against published 135894-row corpus", "Review negative semantics by trec5/trec6/trec7 sub-source", "Preserve language/source and resolve overlaps"]
+    },
+    {
+      "rule_id": "meajor_positive_mixed_review",
+      "dataset": "meajor",
+      "raw_label": "1.0",
+      "proposed_label": null,
+      "status": "blocked_mixed_taxonomy",
+      "evidence": ["https://arxiv.org/html/2507.17978v2"],
+      "conditions": ["Published binary phishing taxonomy imports TREC spam and Nigerian Fraud", "Do not batch-map to VietMailGuard phishing"]
+    },
+    {
+      "rule_id": "meajor_missing_label_review",
+      "dataset": "meajor",
+      "raw_label": "",
+      "proposed_label": null,
+      "status": "blocked_unlabeled",
+      "evidence": ["reports/v21/csv_source_adapters_report.md"],
+      "conditions": ["Missing raw label cannot be source-approved", "Review unreadable or damaged content separately"]
+    }
+  ],
+  "v2_train_validation_reuse": {
+    "status": "pending_separate_protocol",
+    "allowed_input_files_for_review": ["data/splits/v2/train.csv", "data/splits/v2/validation.csv"],
+    "forbidden_input": "data/splits/v2/test.csv",
+    "conditions": ["Preserve V2 label provenance and group IDs", "Demonstrate exclusion of every frozen V2 test fingerprint/parent group", "Do not reinterpret translated Vietnamese as native", "Obtain explicit approval before importing V2 rows into V2.1 curation"]
+  }
+}

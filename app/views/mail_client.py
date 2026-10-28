@@ -21,8 +21,12 @@ from mailbox_ui import (
     sync_mailbox_navigation,
 )
 from styles import apply_mailbox_styles
-from vietmailguard.mail_database import DEFAULT_DATABASE_PATH
+from runtime_ui import (
+    configured_mailbox_path, create_selected_reviewer, draft_input,
+    render_reviewer_result, reviewer_controls, reviewer_request_options,
+)
 from vietmailguard.mail_service import MailService
+from vietmailguard.v21.runtime_modes import V2_MODE, V21_HYBRID_MODE, analyzer_for_mode
 
 
 FOLDER_VIEWS = {"hop_thu_den", "thu_rac", "cach_ly", "da_xoa"}
@@ -130,7 +134,7 @@ def _render_search_filters(view: str, language: str) -> tuple[dict[str, Any], bo
         )
         email_language = st.selectbox(
             t("filter_email_language", language),
-            options=["", "en", "vi", "mixed", "unknown"],
+            options=["", "en", "vi", "zh", "mixed", "unknown"],
             format_func=lambda value: (
                 t("filter_all", language)
                 if not value
@@ -293,9 +297,14 @@ def _render_security_message_list(
                 )
                 folder = str(message.get("folder", "hop_thu_den"))
                 folder_label = t(FOLDER_VIEW_KEYS.get(folder, "folder_inbox"), language)
+                confidence = _stored_number(analysis.get("confidence"))
+                confidence_text = (
+                    f"{confidence:.1%}" if confidence is not None
+                    else t("confidence_unavailable", language)
+                )
                 st.caption(
                     f"{folder_label} · {t('model_confidence', language)}: "
-                    f"{float(analysis.get('confidence', 0.0)):.1%} · "
+                    f"{confidence_text} · "
                     f"{t('security_finding_count', language)}: "
                     f"{int(analysis.get('security_finding_count', 0))}"
                 )
@@ -430,11 +439,16 @@ def _render_analysis(
         return
 
     prediction = str(analysis["prediction"])
+    confidence = _stored_number(analysis.get("confidence"))
+    confidence_text = (
+        f"{confidence:.1%}" if confidence is not None
+        else t("confidence_unavailable", language)
+    )
     st.markdown(
         '<div class="vmg-analysis-summary">'
         f'{_prediction_badge(analysis, language)}'
         f'<span>{escape(t("model_confidence", language))}: '
-        f'<strong>{float(analysis["confidence"]):.1%}</strong></span>'
+        f'<strong>{escape(confidence_text)}</strong></span>'
         f'<span>{escape(t("risk_score", language))}: '
         f'<strong>{float(analysis["risk_score"]):.0f}/100</strong> '
         f'({escape(risk_label(str(analysis.get("risk_level", "LOW")), language))})</span>'
@@ -457,6 +471,14 @@ def _render_analysis(
         else:
             st.warning(warning_text)
     result = analysis.get("result") if isinstance(analysis.get("result"), Mapping) else {}
+    detected = str(result.get("detected_language") or analysis.get("detected_language") or "unknown")
+    support = result.get("language_support_status")
+    support_state = str(support.get("status", "unknown")) if isinstance(support, Mapping) else "unknown"
+    st.caption(
+        f"{t('model_version', language)}: {escape(str(analysis.get('model_version') or ''))} · "
+        f"{t('detected_email_language', language)}: {t(f'email_language_{detected}', language)} · "
+        f"{t('language_support_status', language)}: {t(f'support_{support_state}', language)}"
+    )
     with st.expander(t("analysis_model_risk_details", language)):
         _render_model_risk_details(analysis, result, language)
     with st.expander(t("analysis_model_explanation", language)):
@@ -654,7 +676,11 @@ def _render_message_detail(
     if selected_id is None:
         st.warning(t("mail_detail_unavailable", language))
         return
-    payload = service.open_email(selected_id)
+    # Only a deliberate open marks read. A rerun after "Mark unread" must not
+    # immediately undo that action by opening/marking the same message again.
+    first_open = st.session_state.get("mailbox_rendered_detail_id") != selected_id
+    payload = service.open_email(selected_id, mark_as_read=first_open)
+    st.session_state["mailbox_rendered_detail_id"] = selected_id
     message = payload.get("email")
     if not isinstance(message, Mapping):
         st.error(t("mail_detail_unavailable", language))
@@ -703,6 +729,7 @@ def _render_message_detail(
         st.text(str(message.get("body") or ""))
 
     _render_analysis(payload.get("analysis"), payload.get("routing"), language)
+    _render_llm_review(service, selected_id, payload, language)
     with st.expander(t("folder_history", language)):
         history = payload.get("folder_history", [])
         if not history:
@@ -714,21 +741,47 @@ def _render_message_detail(
             )
 
 
+def _render_llm_review(service: MailService, email_id: int,
+                       payload: Mapping[str, Any], language: str) -> None:
+    """Optional external review; never changes saved ML or folder."""
+    saved = payload.get("llm_review")
+    if isinstance(saved, Mapping):
+        reviewed = saved.get("result", {})
+        if isinstance(reviewed, dict):
+            st.subheader(t("llm_reviewer_title", language))
+            render_reviewer_result(reviewed, language)
+    if st.session_state.get("analysis_mode", V2_MODE) != V21_HYBRID_MODE:
+        return
+    can_review, external = reviewer_controls(language, consent_key=f"llm_consent_{email_id}")
+    if st.button(t("llm_reviewer_run" if external else "reviewer_mock_run", language), disabled=not can_review,
+                 key=f"llm_review_{email_id}"):
+        try:
+            with st.spinner(t("reviewer_running", language)):
+                service.review_stored_email(
+                    email_id, provider=create_selected_reviewer(), allow_external=external,
+                    explicit_email_sharing_consent=bool(external and can_review),
+                    **reviewer_request_options(),
+                )
+            st.rerun()
+        except Exception:
+            st.error(t("llm_reviewer_error", language))
+
+
 def _render_demo_compose(service: MailService, language: str) -> None:
     """Receive a locally composed demo message through the existing service."""
 
     with st.container(key="mailbox_demo_compose"):
         st.markdown(f"### {t('mail_demo_compose', language)}")
         st.caption(t("mail_demo_notice", language))
-        with st.form("mailbox_demo_compose_form"):
+        with st.container():
             sender_column, recipient_column = st.columns(2)
             with sender_column:
-                sender = st.text_input(t("mail_demo_sender", language))
+                sender = draft_input("compose", "sender", t("mail_demo_sender", language))
             with recipient_column:
-                recipient = st.text_input(t("mail_demo_recipient", language))
-            subject = st.text_input(t("mail_demo_subject", language))
-            body = st.text_area(t("mail_demo_body", language), height=170)
-            submitted = st.form_submit_button(t("mail_demo_send", language))
+                recipient = draft_input("compose", "recipient", t("mail_demo_recipient", language))
+            subject = draft_input("compose", "subject", t("mail_demo_subject", language))
+            body = draft_input("compose", "body", t("mail_demo_body", language), multiline=True, height=170)
+            submitted = st.button(t("mail_demo_send", language), key="mail_demo_send")
 
         if not submitted:
             return
@@ -770,7 +823,13 @@ def render() -> None:
     mode = sync_mailbox_navigation(st.session_state, view, _mode_from_query())
 
     try:
-        service = MailService.from_database_path(DEFAULT_DATABASE_PATH)
+        selected_mode = str(st.session_state.get("analysis_mode", V2_MODE))
+        # Loading a folder/opening stored mail never needs a model. Resolve only
+        # when receive/import explicitly asks for new inference.
+        def analyzer(**fields: Any) -> dict[str, Any]:
+            return analyzer_for_mode(selected_mode)(**fields)
+
+        service = MailService.from_database_path(configured_mailbox_path(), analyzer=analyzer)
     except Exception:  # pragma: no cover - environment-dependent UI boundary
         st.error(t("mailbox_database_error", language))
         return
@@ -788,6 +847,9 @@ def render() -> None:
                 language,
             )
             return
+
+        if selected_mode != V2_MODE:
+            st.info(t("v21_development_notice", language))
 
         counts = service.mailbox_counts()
         title_column, refresh_column = st.columns([8.5, 1.0], vertical_alignment="center")

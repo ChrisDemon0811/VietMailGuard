@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "scope": "development_candidate_only",
+  "model_version": "2.1-development",
+  "candidate_id": "tfidf_word_character_linear_svm",
+  "artifact": "models/v21_multilingual/candidates/tfidf_word_character_linear_svm.joblib",
+  "artifact_sha256": "1050eb9cde01610dda3d2f6a34bdaffda90f8462a08e8648cb7fa9310de28af3",
+  "validation_metrics": "results/v21_multilingual/development_validation_metrics.json",
+  "validation_metrics_sha256": "52e025ef655b52934784e63e76666764fb4ab9f3597192e136ede429269d98d4",
+  "training_config": "config/v21/development_training.json",
+  "training_config_sha256": "30648a7d609f5e597512bb7bff9665d9fc79485f3f9a09df5c178f8c57900520",
+  "probability_status": "unavailable_uncalibrated",
+  "supported_classes": ["normal", "spam", "phishing"]
+}

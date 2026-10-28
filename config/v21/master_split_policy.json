@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "ratios": {"train": 0.70, "validation": 0.15, "test": 0.15},
+  "curated_glob": "eligible/part-*.csv",
+  "approved_label_provenance": [],
+  "allowed_labels": ["normal", "spam", "phishing"],
+  "allowed_languages": ["en", "vi", "zh"],
+  "minimum_independent_groups_per_class": 3,
+  "v2_reference_policy": "exclude_all_fingerprint_and_parent_overlaps",
+  "notes": "Populate approved_label_provenance only after documented V2.1 curation. No V2 frozen reference row is a V2.1 training input."
+}

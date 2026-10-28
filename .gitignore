@@ -20,6 +20,26 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
+*.pem
+*.key
+
+# Private mail exports are local inputs, even when placed outside data/raw/.
+*.eml
+*.mbox
+*.msg
+*.pst
+*.ost
+
+# Local runtime, checkpoints, and large binary artifacts (including stray copies).
+*.db
+*.sqlite
+*.sqlite3
+*.ckpt
+*.checkpoint*
+*.joblib
+*.safetensors
+checkpoints/
 
 # Generated data, reports, results, and model artifacts
 data/processed/*
@@ -28,6 +48,8 @@ data/splits/*
 !data/splits/.gitkeep
 data/cache/*
 !data/cache/.gitkeep
+data/curated/*
+data/evaluation/*
 data/runtime/*
 !data/runtime/.gitkeep
 models/*
@@ -59,3 +81,29 @@ reports/v2/*
 # Raw datasets are immutable local inputs. Keep only the directory marker.
 data/raw/*
 !data/raw/.gitkeep
+
+# Version 2.1 local datasets and generated artifacts. Keep directory markers only.
+/dataset v2.1/
+/data/v21/**/*
+!/data/v21/**/
+!/data/v21/**/.gitkeep
+
+# V2.1 local configuration may contain private source paths or credentials.
+/config/v21/*.local.*
+/config/v21/*secret*
+/config/v21/*credential*
+/config/v21/*api_key*
+/config/v21/private/
+
+# V2.1 binaries/results/reports remain local until independently reviewed.
+!models/v21_multilingual/
+models/v21_multilingual/*
+!models/v21_multilingual/.gitkeep
+!results/v21_multilingual/
+results/v21_multilingual/*
+!results/v21_multilingual/.gitkeep
+!reports/v21/
+reports/v21/*
+!reports/v21/.gitkeep
+!reports/v21/research_preview_qa.md
+!reports/v21/git_release_preflight.md

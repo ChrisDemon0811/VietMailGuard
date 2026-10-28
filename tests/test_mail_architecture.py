@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MAIL_PAGE = PROJECT_ROOT / "app" / "pages" / "mail_client.py"
+MAIL_PAGE = PROJECT_ROOT / "app" / "views" / "mail_client.py"
 MAIL_SERVICE = PROJECT_ROOT / "src" / "vietmailguard" / "mail_service.py"
 
 
@@ -54,3 +54,15 @@ def test_all_list_views_open_the_shared_detail_renderer() -> None:
     assert "_open_detail(email_id, current_view)" in source
     assert '_open_detail(email_id, "security")' in source
     assert source.count("def _render_message_detail(") == 1
+
+
+def test_explicit_navigation_does_not_enable_legacy_pages_discovery() -> None:
+    assert not (PROJECT_ROOT / "app" / "pages").exists()
+    source = (PROJECT_ROOT / "app" / "app.py").read_text(encoding="utf-8")
+    for name in ("mail_client", "email_analyzer", "model_dashboard", "dataset_dashboard", "methodology"):
+        relative = f"views/{name}.py"
+        assert relative in source
+        assert (PROJECT_ROOT / "app" / relative).is_file()
+    assert 'url_path="quick-analyzer"' in source
+    assert 'url_path="model-dashboard"' in source
+    assert 'url_path="dataset-dashboard"' in source

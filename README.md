@@ -5,8 +5,11 @@
 - [VietMailGuard V2 Model Card](MODEL_CARD.md)
 - [Dataset provenance and licensing](DATASETS.md)
 - [Tested environment and reproducibility](ENVIRONMENT.md)
+- [V2.1 Research Preview: modes, Windows demo and scientific boundaries](V21_RESEARCH_PREVIEW.md)
 
 ## English
+
+V2.1 is available locally as an **opt-in Research Preview**, not production. The frozen V2 model remains the default. The V2.1 three-class candidate is uncalibrated and Development/Validation-only; the separate TREC06C Ham/Spam model does not route mailbox messages or validate Chinese phishing detection. See the [Research Preview guide](V21_RESEARCH_PREVIEW.md) for setup, artifact verification, optional consent-gated Gemini Reviewer, TREC demo and remaining benchmark gates.
 
 VietMailGuard Version 2 is a reproducible three-class email security project. Its frozen production model analyzes English and Vietnamese content and returns one internal label: `normal`, `spam`, or `phishing`.
 
@@ -307,6 +310,8 @@ No placeholder or unofficial model URL is embedded in the repository.
 - Version 2.1 needs a new, untouched native Vietnamese benchmark and a separately governed protocol for short, obfuscated, and mixed-language email. The frozen Version 2 test must not be reused for tuning.
 
 ## Tiếng Việt
+
+V2.1 hiện là **Research Preview tùy chọn**, chưa phải production; V2 đóng băng vẫn là chế độ mặc định. Candidate ba lớp V2.1 chưa hiệu chuẩn xác suất và mới được đánh giá trên Validation phát triển. Mô hình nhị phân TREC06C Ham/Spam không tham gia định tuyến thư và không chứng minh khả năng phát hiện Phishing tiếng Trung. Xem [hướng dẫn Research Preview](V21_RESEARCH_PREVIEW.md) để cài đặt, xác minh artifact, dùng Gemini khi có đồng ý, chạy demo TREC và theo dõi các benchmark còn thiếu.
 
 VietMailGuard Version 2 là hệ thống phân loại email ba lớp có khả năng tái lập: `normal`, `spam`, `phishing`.
 
