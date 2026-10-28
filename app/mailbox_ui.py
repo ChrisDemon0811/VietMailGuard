@@ -101,6 +101,7 @@ def select_mailbox_message(
     state["mailbox_current_view"] = view
     state["mailbox_return_view"] = view
     state["mailbox_mode"] = "detail"
+    state.pop("mailbox_rendered_detail_id", None)
 
 
 def return_to_mailbox_list(state: MutableMapping[str, Any]) -> str:
@@ -111,6 +112,7 @@ def return_to_mailbox_list(state: MutableMapping[str, Any]) -> str:
     )
     state["mailbox_current_view"] = view
     state["mailbox_mode"] = "list"
+    state.pop("mailbox_rendered_detail_id", None)
     return view
 
 

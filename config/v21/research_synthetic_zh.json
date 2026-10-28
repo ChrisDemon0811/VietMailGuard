@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "scope": "research_synthetic_zh_validation_only",
+  "source_repo": "Dizzzy0x00/LLMGen-Phishing-Email-Dataset",
+  "source_revision": "d717e5457b71cb44dd038dafe6a81cea5e0badab",
+  "source_file": "CN_Phishing_Email_dataset.csv",
+  "source_sha256": "102e2c44239698c73e5e34abe277ca7aca25424cacb8af9425549a30fb0fc529",
+  "declared_license": "apache-2.0",
+  "raw_label_mapping_research_only": {"0": "normal", "1": "phishing"},
+  "seed": 42,
+  "synthetic_challenge_fraction": 0.2,
+  "minimum_han_characters": 30,
+  "max_input_characters": 2048,
+  "minimum_free_ram_gib": 2.0,
+  "tfidf": {
+    "word": {"ngram_range": [1, 2], "min_df": 2, "max_features": 30000, "sublinear_tf": true},
+    "character": {"analyzer": "char_wb", "ngram_range": [3, 5], "min_df": 2, "max_features": 50000, "sublinear_tf": true}
+  },
+  "classifiers": {
+    "linear_svm": {"C": 1.0, "class_weight": "balanced", "max_iter": 5000},
+    "logistic_regression": {"C": 1.0, "class_weight": "balanced", "solver": "lbfgs", "max_iter": 300}
+  }
+}

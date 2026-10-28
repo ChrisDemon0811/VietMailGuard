@@ -13,6 +13,7 @@ from i18n import class_label, t
 from styles import render_page_header
 from vietmailguard.dashboard_data import ModelDashboardData, load_model_dashboard_data
 from vietmailguard.inference import model_display_name
+from research_dashboard_ui import render_model_research
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -346,20 +347,24 @@ def render() -> None:
     """Render the Model Dashboard page."""
     language = _language()
     render_page_header(
-        t("model_dashboard_title", language), t("model_dashboard_intro", language)
+        t("model_dashboard_title", language), t("rd_model_intro", language)
     )
-    data = _dashboard_data()
-    _show_artifact_errors(data.errors, language)
-    _render_selected_model(data, language)
-    st.divider()
-    _render_test_metrics(data, language)
-    _render_confusion_matrix(data, language)
-    st.divider()
-    _render_translated_vietnamese(data, language)
-    st.divider()
-    _render_comparison(data, language)
-    st.divider()
-    _render_robustness(data, language)
+    research, production = st.tabs([t("rd_research", language), t("rd_v2", language)])
+    with research:
+        render_model_research(PROJECT_ROOT, language)
+    with production:
+        data = _dashboard_data()
+        _show_artifact_errors(data.errors, language)
+        _render_selected_model(data, language)
+        st.divider()
+        _render_test_metrics(data, language)
+        _render_confusion_matrix(data, language)
+        st.divider()
+        _render_translated_vietnamese(data, language)
+        st.divider()
+        _render_comparison(data, language)
+        st.divider()
+        _render_robustness(data, language)
 
 
 render()

@@ -50,7 +50,7 @@ def _row_to_analysis(row: sqlite3.Row) -> dict[str, Any]:
         "model_version": str(row["phien_ban_mo_hinh"]),
         "detected_language": str(row["ngon_ngu_phat_hien"]),
         "prediction": str(row["nhan_du_doan"]),
-        "confidence": float(row["do_tin_cay"]),
+        "confidence": None if row["do_tin_cay"] is None else float(row["do_tin_cay"]),
         "risk_score": float(row["diem_rui_ro"]),
         "risk_level": str(row["muc_rui_ro"]),
         "base_recommended_action": str(row["hanh_dong_goc"]),
@@ -325,7 +325,7 @@ class MailRepository:
         model_version: str,
         detected_language: str,
         prediction: str,
-        confidence: float,
+        confidence: float | None,
         risk_score: float,
         risk_level: str,
         base_recommended_action: str,
@@ -343,7 +343,7 @@ class MailRepository:
             raise ValueError(f"Unsupported ML prediction: {prediction!r}")
         if risk_level not in ALLOWED_RISK_LEVELS:
             raise ValueError(f"Unsupported risk level: {risk_level!r}")
-        if not 0.0 <= float(confidence) <= 1.0:
+        if confidence is not None and not 0.0 <= float(confidence) <= 1.0:
             raise ValueError("Confidence must be between 0 and 1")
         if not 0.0 <= float(risk_score) <= 100.0:
             raise ValueError("Risk score must be between 0 and 100")
@@ -364,7 +364,7 @@ class MailRepository:
                 model_version,
                 detected_language,
                 prediction,
-                float(confidence),
+                None if confidence is None else float(confidence),
                 float(risk_score),
                 risk_level,
                 base_recommended_action,
@@ -389,6 +389,51 @@ class MailRepository:
             (email_id,),
         ).fetchone()
         return None if row is None else _row_to_analysis(row)
+
+    def save_llm_review(self, email_id: int, analysis_id: int,
+                        review: Mapping[str, Any]) -> int:
+        """Append a reviewer record without changing the immutable ML analysis."""
+        self._require_email(email_id)
+        owner = self.connection.execute(
+            "SELECT id_thu FROM phan_tich_thu WHERE id_phan_tich = ?", (analysis_id,)
+        ).fetchone()
+        if owner is None or int(owner[0]) != email_id:
+            raise ValueError("Reviewer analysis does not belong to this email")
+        reviewer = review.get("reviewer")
+        if not isinstance(reviewer, Mapping):
+            raise ValueError("Missing reviewer result")
+        assessment = reviewer.get("assessment")
+        if assessment is not None and assessment not in {"normal", "spam", "phishing", "review"}:
+            raise ValueError("Invalid reviewer assessment")
+        cursor = self.connection.execute(
+            """
+            INSERT INTO danh_gia_llm(
+                id_thu, id_phan_tich, nha_cung_cap, nhan_danh_gia,
+                trang_thai, ket_qua_json
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (email_id, analysis_id, str(reviewer.get("provider", "unknown")),
+             assessment, str(reviewer.get("status", "unknown")),
+             json.dumps(dict(review), ensure_ascii=False, sort_keys=True)),
+        )
+        return int(cursor.lastrowid)
+
+    def get_latest_llm_review(self, email_id: int,
+                              analysis_id: int | None = None) -> dict[str, Any] | None:
+        if analysis_id is None:
+            return None
+        row = self.connection.execute(
+            """
+            SELECT * FROM danh_gia_llm WHERE id_thu = ? AND id_phan_tich = ?
+            ORDER BY id_danh_gia DESC LIMIT 1
+            """, (email_id, analysis_id)
+        ).fetchone()
+        if row is None:
+            return None
+        return {"id": int(row["id_danh_gia"]),
+                "analysis_id": int(row["id_phan_tich"]),
+                "result": json.loads(str(row["ket_qua_json"])),
+                "reviewed_at": str(row["thoi_gian_tao"])}
 
     def save_user_feedback(
         self,

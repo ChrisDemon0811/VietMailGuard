@@ -192,7 +192,7 @@ def test_required_indexes_exist(tmp_path: Path) -> None:
     assert set(REQUIRED_INDEXES).issubset(index_names)
 
 
-def test_schema_version_is_one(tmp_path: Path) -> None:
+def test_schema_version_is_two_with_v1_history(tmp_path: Path) -> None:
     connection = open_initialized_database(tmp_path / "mail.db")
     try:
         rows = connection.execute(
@@ -200,7 +200,7 @@ def test_schema_version_is_one(tmp_path: Path) -> None:
         ).fetchall()
     finally:
         connection.close()
-    assert [row[0] for row in rows] == [1]
+    assert [row[0] for row in rows] == [1, 2]
 
 
 def test_transaction_rolls_back_on_failure(tmp_path: Path) -> None:

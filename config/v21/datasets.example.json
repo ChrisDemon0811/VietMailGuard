@@ -1,0 +1,7 @@
+{
+  "$schema": "./schema.json",
+  "schema_version": 1,
+  "data_directory_env": "VIETMAILGUARD_V21_DATA_DIR",
+  "datasets": []
+}
+

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "source": "TREC06C",
+  "source_document": "https://trec.nist.gov/pubs/trec15/papers/SPAM06.OVERVIEW.pdf",
+  "raw_label_semantics": {
+    "ham": "Binary non-spam in the TREC corpus; mailing-list origin. Candidate normal only.",
+    "spam": "Binary spam-trap mail in the TREC corpus. May mix commercial spam, scams and phishing."
+  },
+  "bulk_approval": false,
+  "bulk_approval_status": "requires_explicit_user_policy_confirmation_and_stratified_human_audit",
+  "automatic_phishing_from_spam": false,
+  "individual_review_rule_id": "trec06c_individual_human_content_review_v1",
+  "individual_review_requirements": [
+    "Review full subject and body locally",
+    "Record reviewer, manual method, UTC time and evidence",
+    "Verify original path, source, raw label and audited text fingerprint",
+    "Reject empty, missing body, decode-error and no-Chinese-character rows from eligibility",
+    "Keep duplicate/template groups and cross-source overlaps in review until joint resolution",
+    "Do not use ML or LLM predictions as ground truth"
+  ],
+  "allowed_manual_decisions": ["normal", "spam", "phishing", "review", "exclude"],
+  "source_only_status": "weak_label",
+  "review_queue_private_path": "data/v21/curated/trec06c/review_queue.csv",
+  "decision_manifest_private_path": "data/v21/curated/trec06c/decisions.csv"
+}

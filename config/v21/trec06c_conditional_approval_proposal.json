@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "proposal_id": "trec06c_ham_clean_singleton_normal_v1",
+  "status": "proposed_inactive",
+  "user_approved": false,
+  "source": "TREC06C",
+  "raw_label": "ham",
+  "proposed_class": "normal",
+  "observed_frame_rows": 6802,
+  "not_training_eligible_from_proposal": true,
+  "required_row_gates": [
+    "authoritative MIME-v2 source ID/raw_label/original_path match frozen dedup audit",
+    "nonempty Chinese subject/body and nonempty body",
+    "no decode error, MIME defect/recovery or HTML-only quality flag",
+    "exact/normalized/template singleton in cross-source dedup audit",
+    "no unresolved label conflict or known V2 fingerprint collision",
+    "do not infer native real-world Chinese benchmark status"
+  ],
+  "required_approval_gates": [
+    "Complete the frozen Ham length-stratified human sample of 345 rows",
+    "Report observed non-Normal and unresolved rates with per-stratum uncertainty",
+    "Adjudicate anomalous and recruitment/commercial-looking Ham examples separately",
+    "User explicitly approves an acceptable discordance/uncertainty threshold",
+    "User explicitly approves this source-specific rule ID in a later task",
+    "Before any training export, re-check exact/normalized/template and V2 frozen-test fingerprint grouping"
+  ],
+  "spam_bulk_rule": null,
+  "phishing_bulk_rule": null,
+  "notes": "The 6802 rows are only a prospective review frame, never an eligible count. No automatic mapping is active."
+}

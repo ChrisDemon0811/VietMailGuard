@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "scope": "future_independent_chinese_email_benchmark_intake",
+  "required_csv_columns": [
+    "candidate_id", "source", "source_record_id", "source_version", "source_url",
+    "license_status", "permission_evidence", "data_origin", "language_claim",
+    "raw_label", "proposed_label", "label_evidence", "reviewer_1_id",
+    "reviewer_1_label", "reviewer_2_id", "reviewer_2_label", "parent_id",
+    "subject", "body"
+  ],
+  "allowed_proposed_labels": ["normal", "spam", "phishing"],
+  "allowed_data_origin_for_benchmark": ["original"],
+  "eligible_status_written_by_screening": false,
+  "candidate_manifest_contains_email_text": false,
+  "final_evaluation_requires_separate_approval": true
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VietMailGuard V2.1 dataset inventory configuration",
+  "description": "An empty inventory is valid. Source provenance and raw-label meaning must be audited before adding mappings or training eligibility.",
+  "type": "object",
+  "required": ["schema_version", "data_directory_env", "datasets"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "data_directory_env": {"const": "VIETMAILGUARD_V21_DATA_DIR"},
+    "datasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "relative_path", "language", "data_origin", "label_semantics_status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "relative_path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Path relative to the configured dataset directory; a future loader must reject traversal and absolute paths."
+          },
+          "language": {"enum": ["en", "vi", "zh", "mixed", "unknown"]},
+          "data_origin": {"enum": ["native", "translated", "synthetic", "unknown"]},
+          "label_semantics_status": {"enum": ["unverified", "verified"]},
+          "label_policy": {
+            "type": "object",
+            "description": "Optional explicit raw-label mapping only after source-specific evidence is recorded.",
+            "additionalProperties": {"enum": ["normal", "spam", "phishing", "review", "exclude"]}
+          }
+        }
+      }
+    }
+  }
+}

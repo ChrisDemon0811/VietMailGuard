@@ -1,0 +1,3 @@
+# Optional V2.1 external reviewer only. Install core requirements separately.
+google-genai>=1,<3
+python-dotenv>=1,<2
