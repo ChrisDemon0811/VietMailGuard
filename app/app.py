@@ -32,6 +32,8 @@ from styles import apply_global_styles
 from vietmailguard.mail_service import MailService
 from vietmailguard.v21.runtime_inference import model_availability
 from vietmailguard.v21.runtime_modes import V2_MODE, V21_ML_MODE, V21_HYBRID_MODE
+from vietmailguard.v21.runtime_modes import V21_MULTILINGUAL_MODE
+from vietmailguard.v21.multilingual_runtime import multilingual_availability
 
 st.set_page_config(
     page_title="VietMailGuard Mail",
@@ -159,7 +161,12 @@ with st.sidebar:
     v21_available, _ = model_availability()
     modes = [V2_MODE]
     if v21_available:
-        modes.extend([V21_ML_MODE, V21_HYBRID_MODE])
+        modes.append(V21_ML_MODE)
+    multilingual_available, multilingual_reason = multilingual_availability()
+    if multilingual_available:
+        modes.append(V21_MULTILINGUAL_MODE)
+    if v21_available or multilingual_available:
+        modes.append(V21_HYBRID_MODE)
     selected_mode = st.session_state.get(
         "analysis_mode_selector", st.session_state.get("analysis_mode", V2_MODE)
     )
@@ -174,7 +181,25 @@ with st.sidebar:
     st.session_state["analysis_mode"] = st.session_state["analysis_mode_selector"]
     if not v21_available:
         st.caption(t("mode_v21_unavailable", language))
+    if not multilingual_available:
+        st.caption(t("mode_multilingual_unavailable", language))
+        # Diagnostic is an allowlisted code, never an exception with local/private data.
+        safe_reasons = {"multilingual_missing_artifact", "multilingual_missing_dependency",
+                        "multilingual_encoder_missing", "multilingual_hash_mismatch"}
+        st.caption(t(multilingual_reason if multilingual_reason in safe_reasons
+                     else "multilingual_invalid_configuration", language))
     if st.session_state["analysis_mode"] == V21_HYBRID_MODE:
+        bases = ([V21_ML_MODE] if v21_available else []) + (
+            [V21_MULTILINGUAL_MODE] if multilingual_available else [])
+        # Widget keys are cleaned up across pages/modes. Keep the actual choice
+        # in non-widget state, just as analysis_mode and reviewer_provider are.
+        base = st.session_state.get("hybrid_classifier_selector",
+                                    st.session_state.get("hybrid_classifier", bases[0]))
+        st.session_state["hybrid_classifier_selector"] = base if base in bases else bases[0]
+        st.selectbox(t("hybrid_base_classifier", language), options=bases,
+                     format_func=lambda value: t(f"mode_{value}", language),
+                     key="hybrid_classifier_selector")
+        st.session_state["hybrid_classifier"] = st.session_state["hybrid_classifier_selector"]
         render_reviewer_selector(language)
 
 navigation.run()

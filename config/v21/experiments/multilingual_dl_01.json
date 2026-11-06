@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "experiment": "multilingual_dl_01",
+  "scope": "development_validation_only",
+  "seed": 42,
+  "max_input_characters": 4096,
+  "classes": ["normal", "spam", "phishing"],
+  "encoder": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e04d38a7d68c60a7a95390045400a555127ab033",
+    "dimension": 384,
+    "max_sequence_length": 128,
+    "batch_size_cuda": 32,
+    "batch_size_cpu": 8,
+    "min_free_ram_gib": 1.5,
+    "min_free_vram_gib": 1.0,
+    "local_files_only": true,
+    "normalize_embeddings": true,
+    "frozen": true
+  },
+  "classifier_min_free_ram_gib": 0.75,
+  "cpu_threads": 2,
+  "svc": {"C": 1.0, "class_weight": "balanced", "max_iter": 5000},
+  "mlp": {
+    "hidden_layer_sizes": [128, 64],
+    "activation": "relu",
+    "solver": "adam",
+    "alpha": 0.0001,
+    "batch_size": 256,
+    "learning_rate_init": 0.001,
+    "max_iter": 120,
+    "early_stopping": false,
+    "shuffle": true,
+    "tol": 0.0001,
+    "n_iter_no_change": 15
+  },
+  "mlp_sample_weight": "balanced_train_only",
+  "benchmark_rows_per_language": 8,
+  "benchmark_repeats": 3,
+  "download_allowed": false,
+  "final_test_allowed": false
+}

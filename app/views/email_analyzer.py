@@ -26,7 +26,9 @@ from vietmailguard.inference import (
     load_inference_engine,
 )
 from vietmailguard.v21.runtime_modes import V2_MODE, V21_HYBRID_MODE
-from vietmailguard.v21.runtime_inference import load_v21_engine
+from vietmailguard.v21.runtime_modes import V21_MULTILINGUAL_MODE
+from vietmailguard.v21.multilingual_runtime import load_multilingual_engine
+from vietmailguard.v21.runtime_inference import V21ModelUnavailable, load_v21_engine
 from vietmailguard.v21.llm_reviewer import review_email
 
 _RESULT_STATE_KEY = "vietmailguard_analysis_result"
@@ -63,9 +65,16 @@ def _production_engine() -> Any:
 
 
 def _selected_engine() -> Any:
-    if st.session_state.get("analysis_mode", V2_MODE) == V2_MODE:
+    mode = st.session_state.get("analysis_mode", V2_MODE)
+    if mode == V2_MODE:
         return _production_engine()
-    return load_v21_engine()
+    if mode == V21_HYBRID_MODE:
+        mode = st.session_state.get("hybrid_classifier_selector", "v21_ml")
+    if mode == V21_MULTILINGUAL_MODE:
+        return load_multilingual_engine()
+    if mode == "v21_ml":
+        return load_v21_engine()
+    raise V21ModelUnavailable("Unknown base classifier; no fallback prediction")
 
 
 def _language() -> str:
@@ -111,10 +120,16 @@ def _submit_analysis(
         "parsed_eml": parsed,
         "input_source": "eml" if parsed is not None else "manual",
         "analysis_mode": str(st.session_state.get("analysis_mode", V2_MODE)),
+        "classifier_mode": _selected_classifier(),
         "email_fields": {
             "sender": effective_sender, "subject": effective_subject, "body": effective_body,
         },
     }
+
+
+def _selected_classifier() -> str:
+    mode = str(st.session_state.get("analysis_mode", V2_MODE))
+    return str(st.session_state.get("hybrid_classifier_selector", "v21_ml")) if mode == V21_HYBRID_MODE else mode
 
 
 def _render_prediction_summary(result: dict[str, Any], language: str) -> None:
@@ -352,10 +367,13 @@ def render() -> None:
     if st.session_state.get("analysis_mode", V2_MODE) == V2_MODE:
         st.info(t("model_scope_notice", language))
     else:
-        st.info(t("v21_development_notice", language))
+        st.info(t("multilingual_experimental_notice" if _selected_classifier() == V21_MULTILINGUAL_MODE
+                  else "v21_development_notice", language))
     with st.container(border=True):
         st.markdown(f"**{t('known_limitations_title', language)}**")
-        st.markdown(t("known_limitations_compact" if is_v2 else "known_limitations_v21", language))
+        st.markdown(t("known_limitations_compact" if is_v2 else
+                      "multilingual_experimental_notice" if _selected_classifier() == V21_MULTILINGUAL_MODE
+                      else "known_limitations_v21", language))
 
     st.caption(t("quick_draft_notice", language))
     with st.container(border=True):
@@ -412,6 +430,9 @@ def render() -> None:
     if not isinstance(payload, dict) or not isinstance(payload.get("result"), dict):
         return
     if payload.get("analysis_mode", V2_MODE) != st.session_state.get("analysis_mode", V2_MODE):
+        st.info(t("analyze_email", language))
+        return
+    if payload.get("classifier_mode", payload.get("analysis_mode")) != _selected_classifier():
         st.info(t("analyze_email", language))
         return
     _render_parsed_metadata(payload, language)

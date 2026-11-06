@@ -27,6 +27,7 @@ from runtime_ui import (
 )
 from vietmailguard.mail_service import MailService
 from vietmailguard.v21.runtime_modes import V2_MODE, V21_HYBRID_MODE, analyzer_for_mode
+from vietmailguard.v21.runtime_modes import V21_MULTILINGUAL_MODE
 
 
 FOLDER_VIEWS = {"hop_thu_den", "thu_rac", "cach_ly", "da_xoa"}
@@ -479,6 +480,9 @@ def _render_analysis(
         f"{t('detected_email_language', language)}: {t(f'email_language_{detected}', language)} · "
         f"{t('language_support_status', language)}: {t(f'support_{support_state}', language)}"
     )
+    if result.get("model_scope") == "multilingual_experimental":
+        st.text(str(result.get("model_name", "")))
+        st.caption(t("multilingual_experimental_notice", language))
     with st.expander(t("analysis_model_risk_details", language)):
         _render_model_risk_details(analysis, result, language)
     with st.expander(t("analysis_model_explanation", language)):
@@ -824,10 +828,11 @@ def render() -> None:
 
     try:
         selected_mode = str(st.session_state.get("analysis_mode", V2_MODE))
+        hybrid_base = str(st.session_state.get("hybrid_classifier_selector", "v21_ml"))
         # Loading a folder/opening stored mail never needs a model. Resolve only
         # when receive/import explicitly asks for new inference.
         def analyzer(**fields: Any) -> dict[str, Any]:
-            return analyzer_for_mode(selected_mode)(**fields)
+            return analyzer_for_mode(selected_mode, hybrid_base=hybrid_base)(**fields)
 
         service = MailService.from_database_path(configured_mailbox_path(), analyzer=analyzer)
     except Exception:  # pragma: no cover - environment-dependent UI boundary
@@ -849,7 +854,9 @@ def render() -> None:
             return
 
         if selected_mode != V2_MODE:
-            st.info(t("v21_development_notice", language))
+            is_multilingual = selected_mode == V21_MULTILINGUAL_MODE or (
+                selected_mode == V21_HYBRID_MODE and hybrid_base == V21_MULTILINGUAL_MODE)
+            st.info(t("multilingual_experimental_notice" if is_multilingual else "v21_development_notice", language))
 
         counts = service.mailbox_counts()
         title_column, refresh_column = st.columns([8.5, 1.0], vertical_alignment="center")

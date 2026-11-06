@@ -37,7 +37,7 @@ def _handler() -> tuple[dict[str, Any], EngineSpy, ast.If]:
     tree = ast.parse(PAGE_PATH.read_text(encoding="utf-8"))
     definitions = [node for node in tree.body if (
         isinstance(node, ast.ClassDef) and node.name == "_EmlParseError"
-    ) or (isinstance(node, ast.FunctionDef) and node.name == "_submit_analysis")]
+    ) or (isinstance(node, ast.FunctionDef) and node.name in {"_submit_analysis", "_selected_classifier"})]
     engine = EngineSpy()
     ui = SimpleNamespace(session_state={"analysis_mode": "v21_ml"}, errors=[])
     ui.spinner = lambda *_args: nullcontext()
@@ -45,6 +45,7 @@ def _handler() -> tuple[dict[str, Any], EngineSpy, ast.If]:
     scope = {
         "Any": Any, "parse_eml_bytes": parse_eml_bytes,
         "_selected_engine": lambda: engine, "st": ui, "V2_MODE": "v2",
+        "V21_HYBRID_MODE": "v21_hybrid",
     }
     exec(compile(ast.Module(definitions, type_ignores=[]), str(PAGE_PATH), "exec"), scope)
     render = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "render")

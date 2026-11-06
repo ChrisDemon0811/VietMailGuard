@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "scope": "multilingual_experimental",
+  "model_version": "2.1-multilingual-experimental",
+  "probability_status": "unavailable_uncalibrated",
+  "classes": [
+    "normal",
+    "spam",
+    "phishing"
+  ],
+  "artifact": "models/v21_multilingual/experiments/multilingual_dl_01/C_minilm_mlp.joblib",
+  "training_config": "config/v21/experiments/multilingual_dl_01.json",
+  "training_receipt": "results/v21_multilingual/experiments/multilingual_dl_01/model_metadata.json",
+  "max_input_characters": 4096,
+  "encoder": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e04d38a7d68c60a7a95390045400a555127ab033",
+    "dimension": 384,
+    "max_sequence_length": 128,
+    "batch_size_cuda": 32,
+    "batch_size_cpu": 8,
+    "min_free_ram_gib": 1.5,
+    "min_free_vram_gib": 1.0,
+    "local_files_only": true,
+    "normalize_embeddings": true,
+    "frozen": true
+  },
+  "encoder_files": {
+    "config.json": "6300193cb75e01cf80c96decef7187dfb33094d97cc1490b7ead6ff134476e4e",
+    "config_sentence_transformers.json": "b8c64b5cece00d8424b4896ea75b512b6008576088497609dfeb6bd63e6d36b8",
+    "modules.json": "8f4b264b80206c830bebbdcae377e137925650a433b689343a63bdc9b3145460",
+    "pytorch_model.bin": "16cc9e54df6e083272378abec2d75dc34d7a48b5276db3ccc050d18de672ac59",
+    "sentence_bert_config.json": "70f4448f31320443fe3557cacea5abf2dcc4915dda8c80646bec9f3bb0aa5a1f",
+    "special_tokens_map.json": "378eb3bf733eb16e65792d7e3fda5b8a4631387ca04d2015199c4d4f22ae554d",
+    "tokenizer.json": "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8",
+    "tokenizer_config.json": "cac868512d555e9ac37a33c28300d36931ae4b5ddff43f1ca9bdacfe6fcd9dc8",
+    "1_Pooling/config.json": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+  },
+  "artifact_sha256": "4594b919c56218a8bae1eea649a950bf4e21b4fafe126d487a653d9f85c453ff",
+  "training_config_sha256": "7e4ee1545c6e1d81c386ef6ef4b90dd8349183544d91f32c44d81a929097bc5f",
+  "training_receipt_sha256": "f7bb2b2a2721cbbf9303b3aab1f3ab86d43dfc8948eb07806692da9aa6a96a27"
+}

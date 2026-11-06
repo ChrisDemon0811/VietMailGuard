@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "experiment": "dimensionality_reduction_02",
+  "scope": "development_validation_only",
+  "seed": 42,
+  "max_input_characters": 4096,
+  "cpu_threads": 2,
+  "transform_batch_rows": 512,
+  "svd_components": [100, 200, 300],
+  "svd": {"algorithm": "randomized", "n_iter": 5, "n_oversamples": 10},
+  "pca_components": [50, 100, 200],
+  "pca": {"svd_solver": "randomized", "iterated_power": 5, "n_oversamples": 10, "whiten": false},
+  "lda": {"solver": "svd", "n_components": 2, "tol": 0.0001},
+  "svc": {"C": 1.0, "class_weight": "balanced", "max_iter": 5000},
+  "encoder": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e04d38a7d68c60a7a95390045400a555127ab033",
+    "dimension": 384,
+    "max_sequence_length": 128
+  },
+  "ram_headroom_gib": 0.25,
+  "workspace_safety_factor": 1.5,
+  "benchmark_rows_per_language": 8,
+  "benchmark_repeats": 3,
+  "plot_max_rows_per_class": 1000,
+  "download_allowed": false,
+  "final_test_allowed": false,
+  "runtime_modified": false
+}
