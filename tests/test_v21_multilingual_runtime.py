@@ -205,7 +205,9 @@ def test_streamlit_real_multilingual_analyze_language_draft_hybrid_and_save(
         assert payload["result"]["detected_language"] == language
         assert payload["result"]["model_scope"] == "multilingual_experimental"
     original = copy.deepcopy(app.session_state["vietmailguard_analysis_result"]["result"])
-    select("language_selector").set_value("vi").run()
+    assert app.session_state["interface_language"] == "vi"
+    assert not any(item.key == "language_selector" for item in app.selectbox)
+    app.run()
     assert app.session_state["vietmailguard_analysis_result"]["result"] == original
     assert next(item for item in app.text_area if item.key == "input_quick_body").value == SAMPLES[-1][2]
     button("quick_save_to_mailbox").click().run()

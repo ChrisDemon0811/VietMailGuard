@@ -12,13 +12,15 @@ APP_PATH = PROJECT_ROOT / "app" / "app.py"
 pytestmark = pytest.mark.production_artifact
 
 def test_all_streamlit_pages_render_saved_artifacts() -> None:
+    from i18n import t
+    language = "vi"
     app = AppTest.from_file(str(APP_PATH), default_timeout=90).run()
     assert not app.exception
     assert any("VietMailGuard Mail" in item.value for item in app.markdown)
 
     app.switch_page("views/email_analyzer.py").run(timeout=90)
     assert not app.exception
-    assert [button.label for button in app.main.button] == ["Analyze Email"]
+    assert [button.label for button in app.main.button] == [t("analyze_email", language)]
 
     app.switch_page("views/model_dashboard.py").run(timeout=90)
     assert not app.exception
@@ -29,15 +31,15 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
     )
     overall = saved_metrics["overall_test_metrics"]
     displayed_metrics = {metric.label: metric.value for metric in app.metric}
-    assert displayed_metrics["Test rows"] == "6,704"
+    assert displayed_metrics[t("test_rows", language)] == "6,704"
     assert displayed_metrics["Macro F1"] == f"{overall['macro_f1']:.6f}"
-    assert displayed_metrics["Phishing Recall"] == (
+    assert displayed_metrics[t("phishing_recall", language)] == (
         f"{overall['per_class']['phishing']['recall']:.6f}"
     )
-    assert displayed_metrics["Macro F1 for represented classes"] == "1.000000"
-    assert len(app.get("plotly_chart")) == 2
+    assert displayed_metrics[t("represented_macro_f1", language)] == "1.000000"
+    assert len(app.get("plotly_chart")) == 3
     assert any(
-        "No Vietnamese phishing examples" in warning.value for warning in app.warning
+        t("no_vietnamese_phishing_examples", language) in warning.value for warning in app.warning
     )
 
     app.switch_page("views/dataset_dashboard.py").run(timeout=90)
@@ -48,26 +50,25 @@ def test_all_streamlit_pages_render_saved_artifacts() -> None:
         assert saved_report.strip() in [item.value.strip() for item in app.markdown]
     else:
         assert app.info
-    assert any("V2.1 Research Preview" == item.label for item in app.tabs)
+    assert any(t("rd_research", language) == item.label for item in app.tabs)
     manifest_path = PROJECT_ROOT / "data/v21/splits/development_bootstrap/manifest.json"
     if manifest_path.exists():
         saved = json.loads(manifest_path.read_text(encoding="utf-8"))
-        counts = next(item.value for item in app.dataframe if "Measure" in item.value)
-        assert counts.set_index("Measure")["Rows"].to_dict() == {
-            "Train": saved["output_rows"]["train"],
-            "Validation": saved["output_rows"]["validation"],
-            "Development master": saved["output_rows"]["master"],
+        counts = next(item.value for item in app.dataframe if t("rd_measure", language) in item.value)
+        assert counts.set_index(t("rd_measure", language))[t("rd_rows", language)].to_dict() == {
+            t("rd_train", language): saved["output_rows"]["train"],
+            t("rd_validation", language): saved["output_rows"]["validation"],
+            t("rd_master", language): saved["output_rows"]["master"],
         }
 
     app.switch_page("views/methodology.py").run(timeout=90)
     assert not app.exception
-    assert "Risk engine" in [subheader.value for subheader in app.subheader]
-    assert "Known limitations" in [subheader.value for subheader in app.subheader]
-    assert "Version 1 and Version 2" in [subheader.value for subheader in app.subheader]
-    assert "Probability calibration" in [subheader.value for subheader in app.subheader]
+    for key in ("method_risk_title", "method_limitations_title", "method_version_title", "method_calibration_title"):
+        assert t(key, language) in [subheader.value for subheader in app.subheader]
+    assert app.title[0].value == t("demo_overview_title", language)
 
 
-def test_language_switch_preserves_inference_result() -> None:
+def test_vietnamese_default_and_rerun_preserve_inference_result() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
     app.switch_page("views/email_analyzer.py").run(timeout=90)
     app.text_input[0].set_value("project.manager@example.org")
@@ -78,7 +79,9 @@ def test_language_switch_preserves_inference_result() -> None:
     app.button[0].click().run(timeout=180)
     before = dict(app.session_state["vietmailguard_analysis_result"]["result"])
 
-    app.selectbox[0].set_value("vi").run(timeout=90)
+    assert app.session_state["interface_language"] == "vi"
+    assert not any(item.key == "language_selector" for item in app.selectbox)
+    app.run(timeout=90)
     after = dict(app.session_state["vietmailguard_analysis_result"]["result"])
 
     assert not app.exception
@@ -92,6 +95,7 @@ def test_language_switch_preserves_inference_result() -> None:
 
 
 def test_analyzer_shows_v2_metadata_and_separate_explanations() -> None:
+    from i18n import t
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
     app.switch_page("views/email_analyzer.py").run(timeout=90)
     app.text_input[1].set_value("Account alert")
@@ -101,13 +105,13 @@ def test_analyzer_shows_v2_metadata_and_separate_explanations() -> None:
     app.button[0].click().run(timeout=180)
     assert not app.exception
     displayed_metrics = {metric.label: metric.value for metric in app.metric}
-    assert displayed_metrics["Model Version"] == "VietMailGuard V2 Bilingual"
-    assert displayed_metrics["Detected Email Language"] == "English"
-    assert displayed_metrics["Language Support Status"] == "Supported"
+    assert displayed_metrics[t("model_version", "vi")] == "VietMailGuard V2 Bilingual"
+    assert displayed_metrics[t("detected_email_language", "vi")] == t("email_language_en", "vi")
+    assert displayed_metrics[t("language_support_status", "vi")] == t("support_supported", "vi")
     markdown_values = [value.value for value in app.markdown]
-    assert any("A. Model explanation" in value for value in markdown_values)
-    assert any("B. Security Findings" in value for value in markdown_values)
-    assert any("C. URL findings" in value for value in markdown_values)
+    assert any(t("model_explanation_section", "vi") in value for value in markdown_values)
+    assert any(t("security_findings", "vi") in value for value in markdown_values)
+    assert any(t("url_findings_section", "vi") in value for value in markdown_values)
 
 
 def test_required_v2_ui_language_and_email_scenarios() -> None:
@@ -172,7 +176,10 @@ def test_required_v2_ui_language_and_email_scenarios() -> None:
     app = AppTest.from_file(str(APP_PATH), default_timeout=180).run()
     app.switch_page("views/email_analyzer.py").run(timeout=90)
     for interface, subject, body, detected, prediction, action in scenarios:
-        app.selectbox[0].set_value(interface).run(timeout=90)
+        # Stale language state cannot restore the removed UI selector.
+        app.session_state["interface_language"] = interface
+        app.run(timeout=90)
+        assert app.session_state["interface_language"] == "vi"
         app.text_input[0].set_value("sender@example.com")
         app.text_input[1].set_value(subject)
         app.text_area[0].set_value(body)
@@ -186,7 +193,7 @@ def test_required_v2_ui_language_and_email_scenarios() -> None:
             assert result["recommended_action"] == action
 
 
-def test_mailbox_views_render_in_both_interface_languages() -> None:
+def test_mailbox_views_remain_vietnamese_across_reruns() -> None:
     labels = {
         "hop_thu_den": ("Inbox", "Hộp thư đến"),
         "gan_sao": ("Starred", "Gắn sao"),
@@ -200,11 +207,8 @@ def test_mailbox_views_render_in_both_interface_languages() -> None:
         app.query_params["view"] = view
         app.run(timeout=90)
         assert not app.exception
-        assert any(english_label in item.value for item in app.markdown)
-
-        language_selector = next(
-            item for item in app.selectbox if item.key == "language_selector"
-        )
-        language_selector.set_value("vi").run(timeout=90)
+        assert any(vietnamese_label in item.value for item in app.markdown)
+        assert not any(item.key == "language_selector" for item in app.selectbox)
+        app.run(timeout=90)
         assert not app.exception
         assert any(vietnamese_label in item.value for item in app.markdown)

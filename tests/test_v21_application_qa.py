@@ -49,7 +49,8 @@ def test_default_v2_and_invalid_v21_artifact_is_hidden(
     app = AppTest.from_file(str(APP_PATH), default_timeout=30).run()
     assert not app.exception
     assert app.session_state["analysis_mode"] == "v2"
-    assert _selector(app, "analysis_mode_selector").options == ["V2 frozen production"]
+    from i18n import t
+    assert _selector(app, "analysis_mode_selector").options == [t("mode_v2", "vi")]
     assert any("artifact" in item.value.lower() for item in app.sidebar.caption)
 
 

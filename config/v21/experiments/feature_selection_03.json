@@ -1,0 +1,14 @@
+{
+  "experiment": "feature_selection_03",
+  "seed": 42,
+  "k": [15000, 30000, 60000, 100000],
+  "C": [0.1, 1, 10],
+  "cv_folds": 3,
+  "cpu_threads": 2,
+  "cv_min_free_ram_gib": 6.0,
+  "candidate_min_free_ram_gib": 1.0,
+  "transform_batch_rows": 256,
+  "latency_repeats": 5,
+  "download_allowed": false,
+  "final_test_allowed": false
+}

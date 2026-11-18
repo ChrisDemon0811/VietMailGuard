@@ -25,7 +25,7 @@ import runtime_ui
 if not callable(getattr(runtime_ui, "reviewer_request_options", None)):
     runtime_ui = importlib.reload(runtime_ui)
 
-from i18n import SUPPORTED_LANGUAGES, t
+from i18n import t
 from mailbox_ui import sync_mailbox_navigation
 from runtime_ui import configured_mailbox_path, render_reviewer_selector
 from styles import apply_global_styles
@@ -43,10 +43,9 @@ st.set_page_config(
 )
 apply_global_styles()
 
-if "interface_language" not in st.session_state:
-    st.session_state["interface_language"] = "en"
-
-language = str(st.session_state["interface_language"])
+# Presentation only: keep model/content language and saved analysis untouched.
+st.session_state["interface_language"] = "vi"
+language = "vi"
 mail_page = st.Page(
     "views/mail_client.py",
     title=t("nav_mail_client", language),
@@ -150,14 +149,6 @@ with st.sidebar:
     st.page_link(dataset_page, label=t("nav_dataset_dashboard", language), width="stretch")
     st.page_link(methodology_page, label=t("nav_methodology", language), width="stretch")
     st.markdown('<div class="vmg-sidebar-rule"></div>', unsafe_allow_html=True)
-    language = st.selectbox(
-        t("interface_language", language),
-        options=list(SUPPORTED_LANGUAGES),
-        index=list(SUPPORTED_LANGUAGES).index(st.session_state["interface_language"]),
-        format_func=lambda code: t("language_name", code),
-        key="language_selector",
-    )
-    st.session_state["interface_language"] = language
     v21_available, _ = model_availability()
     modes = [V2_MODE]
     if v21_available:

@@ -177,6 +177,34 @@ def test_prompt_metadata_matches_the_actual_system_instruction_used():
     assert review["prompt_sha256"] == hashlib.sha256(SYSTEM_CONTRACT.encode("utf-8")).hexdigest()
 
 
+@pytest.mark.parametrize("body", [
+    "Please bring the project notes to the meeting tomorrow.",
+    "Vui lòng mang tài liệu dự án đến cuộc họp chiều mai.",
+    "明天下午开会，请带上项目资料。",
+])
+def test_vietnamese_output_policy_keeps_email_quotes_in_original_language(body):
+    # Fake output verifies the request/response boundary, not live Gemini compliance.
+    request = ReviewRequest("fixture@example.com", "Synthetic review", body)
+    response = {
+        "assessment": "normal",
+        "summary": "Nội dung phù hợp với thông báo họp; chưa xác minh danh tính người gửi.",
+        "evidence": [{"field": "body", "quote": body,
+                      "explanation": "Thư yêu cầu mang tài liệu đến cuộc họp."}],
+        "suspicious_indicators": [],
+    }
+    result, client = invoke(response, request=request)
+    prompt = client.calls[0]["config"]["system_instruction"]
+    assert "Always write summary, every evidence[].explanation" in prompt
+    assert "suspicious_indicators in Vietnamese" in prompt
+    assert "regardless of the email language or the\ninterface language" in prompt
+    assert "copy each quote verbatim, without translating or correcting it" in prompt
+    assert "respond in another language do not override" in prompt
+    assert result["reviewer"]["status"] == "ok"
+    assert result["reviewer"]["summary"] == response["summary"]
+    assert result["reviewer"]["evidence"] == response["evidence"]
+    assert result["ml_result"]["prediction"] == "normal"
+
+
 @pytest.mark.parametrize("enabled,consent", [(False, False), (True, False), (False, True)])
 def test_policy_revision_does_not_weaken_explicit_external_consent(enabled, consent):
     factory_calls = []

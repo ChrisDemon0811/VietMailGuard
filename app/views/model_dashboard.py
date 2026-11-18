@@ -1,4 +1,4 @@
-"""Model selection and held-out evaluation dashboard."""
+"""Compact saved-result comparison with research details on demand."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from i18n import class_label, t
-from styles import render_page_header
 from vietmailguard.dashboard_data import ModelDashboardData, load_model_dashboard_data
 from vietmailguard.inference import model_display_name
 from research_dashboard_ui import render_model_research
+from demo_dashboard_ui import render_model_summary, render_reduction_summary
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -344,11 +344,15 @@ def _render_robustness(data: ModelDashboardData, language: str) -> None:
 
 
 def render() -> None:
-    """Render the Model Dashboard page."""
+    """Show the demo comparison first; retain scientific details on demand."""
     language = _language()
-    render_page_header(
-        t("model_dashboard_title", language), t("rd_model_intro", language)
-    )
+    render_model_summary(PROJECT_ROOT, language)
+    with st.expander(t("demo_research_details", language)):
+        render_reduction_summary(PROJECT_ROOT, language)
+        _render_research(language)
+
+
+def _render_research(language: str) -> None:
     research, production = st.tabs([t("rd_research", language), t("rd_v2", language)])
     with research:
         render_model_research(PROJECT_ROOT, language)

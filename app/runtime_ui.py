@@ -78,7 +78,6 @@ def reviewer_controls(language: str, *, consent_key: str) -> tuple[bool, bool]:
         return True, False
     from vietmailguard.v21.gemini_reviewer import configuration_status
 
-    st.warning(t("reviewer_external_disclosure", language))
     status = configuration_status()
     compatible = all(key in status for key in (
         "review_timeout_seconds", "review_timeout_valid", "model_access_status"))
@@ -91,7 +90,10 @@ def reviewer_controls(language: str, *, consent_key: str) -> tuple[bool, bool]:
 
         st.caption(t("reviewer_request_policy", language).format(
             seconds=status["review_timeout_seconds"], characters=MAX_EMAIL_FIELD_CHARS))
-    consent = st.checkbox(t("llm_reviewer_consent", language), key=consent_key)
+    consent = st.checkbox(
+        t("llm_reviewer_consent", language), key=consent_key,
+        help=t("reviewer_external_disclosure", language),
+    )
     if not compatible:
         st.warning(t("reviewer_restart_required", language))
     elif not ready:

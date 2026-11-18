@@ -55,7 +55,9 @@ def test_real_candidate_analyze_save_open_mock_and_draft_without_implicit_infere
     widget(app.text_input, "input_quick_subject").set_value("Lịch họp dự án").run()
     widget(app.text_area, "input_quick_body").set_value("Chào cả nhóm, cuộc họp bắt đầu sáng mai.").run()
     assert calls == []
-    widget(app.selectbox, "language_selector").set_value("vi").run()
+    assert app.session_state["interface_language"] == "vi"
+    assert not any(item.key == "language_selector" for item in app.selectbox)
+    app.run()
     assert widget(app.text_input, "input_quick_subject").value == "Lịch họp dự án"
     assert widget(app.text_area, "input_quick_body").value.startswith("Chào cả nhóm")
     assert calls == []

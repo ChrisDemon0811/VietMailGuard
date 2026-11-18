@@ -118,7 +118,31 @@ def _visible_text(app):
     return "\n".join(str(item.value) for kind in kinds for item in app.get(kind))
 
 
+@pytest.mark.parametrize("language", ["en", "vi"])
+def test_external_disclosure_is_checkbox_help_without_yellow_banner(fake_gemini, language):
+    app = AppTest.from_string(
+        "import sys\nimport streamlit as st\n"
+        f"sys.path.insert(0, {str(ROOT / 'app')!r})\n"
+        "from runtime_ui import reviewer_controls\n"
+        "st.session_state['reviewer_provider'] = 'gemini'\n"
+        f"ready, external = reviewer_controls({language!r}, consent_key='test_consent')\n"
+        "st.session_state['review_allowed'] = ready\n"
+    ).run()
+    assert not app.exception
+    catalog = json.loads((ROOT / "config/translations.json").read_text(encoding="utf-8"))[language]
+    assert not app.warning
+    assert len(app.checkbox) == 1
+    assert app.checkbox[0].label == catalog["llm_reviewer_consent"]
+    assert app.checkbox[0].proto.help == catalog["reviewer_external_disclosure"]
+    assert not app.session_state["review_allowed"]
+    app.checkbox[0].check().run()
+    assert app.session_state["review_allowed"]
+    assert fake_gemini.calls == fake_gemini.constructions == []
+
+
 def test_gemini_quick_explicit_click_and_consent_keep_ml_and_saved_routing(fake_gemini):
+    from i18n import t
+
     state = fake_gemini
     app = _hybrid_app()
     original = _quick_result(app)
@@ -126,7 +150,7 @@ def test_gemini_quick_explicit_click_and_consent_keep_ml_and_saved_routing(fake_
     _widget(app.selectbox, "reviewer_provider_selector").set_value("gemini").run()
     assert state.calls == state.constructions == []
     assert _widget(app.button, "quick_llm_review_button").disabled
-    assert "have not been checked with google" in _visible_text(app).lower()
+    assert t("reviewer_access_not_checked", "vi") in _visible_text(app)
     assert "Google" in _visible_text(app)
     _widget(app.checkbox, "quick_llm_consent").check().run()
     assert state.calls == state.constructions == []

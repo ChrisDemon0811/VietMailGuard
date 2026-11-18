@@ -354,19 +354,19 @@ def test_demo_compose_analyzes_and_routes_via_mail_service(
     next(button for button in app.button if button.key == "mailbox_demo_compose_toggle").click()
     app.run()
     assert not app.exception
-    next(item for item in app.text_input if item.label == "From (demo sender)").set_value(
+    next(item for item in app.text_input if item.key == "input_compose_sender").set_value(
         "sender@example.test"
     )
-    next(item for item in app.text_input if item.label == "To (optional)").set_value(
+    next(item for item in app.text_input if item.key == "input_compose_recipient").set_value(
         "recipient@example.test"
     )
-    next(item for item in app.text_input if item.label == "Subject").set_value(
+    next(item for item in app.text_input if item.key == "input_compose_subject").set_value(
         "Account notice"
     )
-    next(item for item in app.text_area if item.label == "Message body").set_value(
+    next(item for item in app.text_area if item.key == "input_compose_body").set_value(
         "Please verify your account."
     )
-    next(button for button in app.button if button.label == "Analyze and deliver locally").click()
+    next(button for button in app.button if button.key == "mail_demo_send").click()
     app.run()
     assert not app.exception
     assert len(analysis_calls) == 1

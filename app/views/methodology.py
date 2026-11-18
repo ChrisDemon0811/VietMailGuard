@@ -6,6 +6,7 @@ import streamlit as st
 
 from i18n import t
 from styles import render_page_header
+from demo_dashboard_ui import render_overview
 
 
 def _language() -> str:
@@ -13,8 +14,14 @@ def _language() -> str:
 
 
 def render() -> None:
-    """Render the Methodology / About page."""
+    """Render the compact overview, retaining methodology on demand."""
     language = _language()
+    render_overview(language)
+    with st.expander(t("demo_method_details", language)):
+        _render_methodology(language)
+
+
+def _render_methodology(language: str) -> None:
     render_page_header(t("methodology_title", language), t("methodology_intro", language))
     st.info(t("model_scope_notice", language))
     st.warning(t("confidence_risk_distinction", language))
