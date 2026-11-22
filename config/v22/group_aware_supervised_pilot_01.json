@@ -1,0 +1,48 @@
+{
+  "experiment": "group_aware_supervised_pilot_01",
+  "scope": "exploratory_verified_local_development_only",
+  "input": "data/v22/supervised_pilot_mask44_02",
+  "seed": 42,
+  "classes": ["normal", "spam", "phishing"],
+  "splitting": {
+    "method": "StratifiedGroupKFold",
+    "n_splits": 5,
+    "selected_fold": 0,
+    "seed": 42,
+    "shuffle": true,
+    "row_order": "id_lexicographic",
+    "fold_search_allowed": false,
+    "original_split_field_preserved": true,
+    "experimental_split_field": "experiment_split"
+  },
+  "relations": {
+    "policy_version": "group_pilot_content_relations_1",
+    "jaccard_cutoff": 0.8125,
+    "minimum_context_characters": 80,
+    "minimum_context_words": 10,
+    "template_word_trigram_cutoff": 0.5,
+    "operational_notice": {
+      "required_words": ["schedule", "download", "failed", "hour", "date"],
+      "maximum_characters": 400,
+      "maximum_words": 50,
+      "differences_allowed": "numeric_slots_only"
+    },
+    "ordinary_template_alone_forces_group": false,
+    "tokenizer_input_equality_forces_feature_constraint": true,
+    "relation_decision_uses_class_labels_or_old_split": false,
+    "unresolved_content_claims_are_human_verified": false
+  },
+  "max_input_characters_per_field": 4096,
+  "tfidf_config": "config/v21/development_training.json",
+  "mlp_config": "config/v21/experiments/multilingual_dl_01.json",
+  "cpu_threads": 2,
+  "hyperparameter_search": false,
+  "validation_tuning": false,
+  "encoder_fit_allowed": false,
+  "weak_unlabeled_pseudo_allowed": false,
+  "network_allowed": false,
+  "gemini_allowed": false,
+  "final_test_access_allowed": false,
+  "runtime_change_allowed": false,
+  "publication_approved": false
+}

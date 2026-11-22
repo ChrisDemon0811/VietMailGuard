@@ -1,5 +1,14 @@
 # VietMailGuard
 
+## V2.2 — Bàn giao đồ án nghiên cứu
+
+Để chạy demo và đọc kết quả V2.2 đã chốt, bắt đầu tại
+[hướng dẫn bàn giao](V22_SUBMISSION_GUIDE.md) và
+[checklist cuối](FINAL_SUBMISSION_CHECKLIST.md).
+V2.2 là nghiên cứu Supervised/Exploratory SSL riêng; các model V2.2 chưa thay
+runtime V2/V2.1. Không chạy lại lệnh training/finalization lịch sử bên dưới để
+chuẩn bị demo. Bản Git không tự chứa các model, dataset hoặc báo cáo local.
+
 ## Project documentation
 
 - [VietMailGuard V2 Model Card](MODEL_CARD.md)

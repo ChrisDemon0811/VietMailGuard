@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "experiment_id": "training_unblock_02",
+  "scope": "restricted_local_expanded_verified_development_pilot",
+  "seed": 42,
+  "supervised_fit_allowed": true,
+  "semi_supervised_fit_allowed": false,
+  "unverified_pool_label_admission_allowed": false,
+  "final_test_access_allowed": false,
+  "network_allowed": false,
+  "gemini_allowed": false,
+  "publication_approved": false,
+  "data": {
+    "directory": "data/v22/training_unblock/verified_expanded",
+    "train_sha256": "5001ceb1ceb8ddc463e2be621003683d42368706a178d270a441d4eb04c6fe9a",
+    "validation_sha256": "33c9684c0c9c8ca247993076f70e988d031f0b605efd7ff527e03b2d31063e27",
+    "expected_rows": {
+      "train": 6185,
+      "validation": 1326
+    },
+    "expected_classes": [
+      "normal",
+      "spam",
+      "phishing"
+    ],
+    "normal_owner_decision_sha256": "d7006cd6ec607df88c53a3252c50d4198abc1314bdae8acb942262e2338d3a17",
+    "spam_owner_decision_sha256": "5173470ff37e1ce684073d0893e1573514bec97dddd2b044b99e86c9afa7f2be",
+    "normal_owner_decision_file": "owner_normal_expanded_decision.json",
+    "new_source_lineage_review_rows": 1
+  },
+  "teachers": {
+    "tfidf": "config/v21/runtime_model.json",
+    "minilm_mlp": "config/v21/runtime_multilingual.json"
+  },
+  "supervised": {
+    "tfidf": "clone existing TF-IDF + LinearSVC configuration, fit only newly approved Train",
+    "minilm_mlp": "reuse frozen verified encoder cache, clone head and fit scaler/MLP only newly approved Train",
+    "parameter_source": "config/v21/experiments/multilingual_dl_01.json",
+    "hyperparameter_sweep": false,
+    "early_stopping_on_validation": false,
+    "calibrate": false,
+    "cpu_threads": 2,
+    "minimum_free_ram_gib": 1.5
+  },
+  "proposal_pilot": {
+    "maximum_rows": 64,
+    "existing_review_samples_only": true,
+    "source": "enron_original",
+    "language_signal": "en",
+    "require_technical_clear": true,
+    "one_per_constraint_group": true,
+    "selection_without_model_scores": true,
+    "use_models": "existing frozen V2.1 teachers, read-only",
+    "source_labels": null,
+    "ground_truth": false,
+    "automatically_admitted_rows": 0,
+    "linear_svc_score_kind": "uncalibrated_margin",
+    "mlp_score_kind": "uncalibrated_softmax",
+    "confidence_threshold": null,
+    "acceptance": "requires independent language-competent annotation; one-sided 95% precision lower bound >= 0.99 per source/class/language/origin cell, sufficient independent groups, zero unresolved evidence; no approval from agreement alone",
+    "acceptance_passed_now": false
+  },
+  "evaluation": {
+    "split": "inherited_approved_development_validation_only",
+    "validation_support": {
+      "normal": 1015,
+      "spam": 5,
+      "phishing": 306
+    },
+    "language": "en",
+    "independent_benchmark": false,
+    "metrics_for_missing_language_or_class": null,
+    "choose_production_model": false,
+    "compare_ssl_only_after_pseudo_admission_gate_passes": true
+  },
+  "outputs": {
+    "models": "models/v22_multilingual/experiments/training_unblock_02",
+    "results": "results/v22_multilingual/experiments/training_unblock_02",
+    "private_proposals": "data/v22/training_unblock/pseudo_proposals_64_expanded.csv"
+  }
+}

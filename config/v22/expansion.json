@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "target_rows": 300000,
+  "target_labels": {"normal": 150000, "spam": 75000, "phishing": 75000},
+  "target_languages": {"en": 150000, "vi": 90000, "zh": 60000},
+  "minhash_permutations": 32,
+  "minhash_rows_per_band": 4,
+  "minhash_shingle_characters": 5,
+  "minhash_max_characters": 50000,
+  "minhash_min_characters": 80,
+  "minhash_similarity": 0.8125,
+  "pairwise_bucket_limit": 64,
+  "review_max_error_rate": 0.01,
+  "review_alpha_per_stratum": 0.05,
+  "review_sample_per_stratum": 299,
+  "review_max_unresolved": 0,
+  "bulk_approval_activated": false,
+  "training_allowed": false,
+  "final_test_access_allowed": false,
+  "workers": 1
+}

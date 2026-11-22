@@ -107,3 +107,15 @@ reports/v21/*
 !reports/v21/.gitkeep
 !reports/v21/research_preview_qa.md
 !reports/v21/git_release_preflight.md
+
+# V2.2 private source/derived content and review decisions remain local.
+/data/v22/
+/config/v22/*.local.*
+/config/v22/*secret*
+/config/v22/*credential*
+/config/v22/*api_key*
+/config/v22/private/
+/dataset v2.2/
+/reports/v22/
+/models/v22_multilingual/
+/results/v22_multilingual/

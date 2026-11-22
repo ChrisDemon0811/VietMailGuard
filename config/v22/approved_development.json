@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "dataset_id": "v22_approved_local_development_9730",
+  "manifest": "data/v22/large_scale_expansion_02/approved_development/manifest.json",
+  "manifest_sha256": "7e757474afa51331ac22d890d7c92388652cee6bae6181495a8be9c69b3f5dab",
+  "train": "data/v22/large_scale_expansion_02/approved_development/train.csv",
+  "train_sha256": "0c533daa93c0ef9fade1a9c0fca46cd1c72b3c5084bb2b71aeaff9deb2939e3c",
+  "validation": "data/v22/large_scale_expansion_02/approved_development/validation.csv",
+  "validation_sha256": "1c427dbd163c73a5064006946905cad209b329ba5134bdade5d222ad2f9622b4",
+  "owner_decision": "data/v22/large_scale_expansion_02/owner_decision.json",
+  "owner_decision_sha256": "4baf07d8adf1c7a816d49188bec55fb231e3c7211e2dcd4bab37b15e8d9ef8e0",
+  "preserve_inherited_assignments": true,
+  "final_test": null,
+  "validation_support": {
+    "spam": 23,
+    "normal": 1343,
+    "phishing": 306
+  },
+  "minimum_validation_per_class": 200,
+  "large_scale_training_allowed": false,
+  "final_evaluation_allowed": false,
+  "pseudo_label_expansion_allowed": false,
+  "pseudo_labels_are_ground_truth": false,
+  "confirmed_pseudo_protocol": {
+    "independent_target_source_class_language_origin_cells": true,
+    "one_sided_confidence": 0.95,
+    "precision_lower_bound": 0.99,
+    "independent_groups_if_zero_errors": 299,
+    "train_only": true,
+    "must_have_real_acceptance_evidence": true
+  },
+  "publication_approved": false,
+  "runtime_model_changed": false
+}

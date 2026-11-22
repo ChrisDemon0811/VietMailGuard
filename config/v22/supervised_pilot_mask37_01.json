@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "experiment": "supervised_pilot_mask37_01",
+  "date": "2026-11-20",
+  "seed": 42,
+  "data_manifest": "data/v22/supervised_pilot_mask37_01/cohort/manifest.json",
+  "data_manifest_sha256": "e7a0e02743c136c44fd20c2e0fd3f73526a2af80a790cb79fd11af6f8e78f50b",
+  "candidate_classes": [
+    "normal",
+    "spam",
+    "phishing"
+  ],
+  "max_input_characters_per_field": 4096,
+  "input_composition": "existing EmailTextComposer subject + newline + body",
+  "tfidf": {
+    "word": {
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 2,
+      "max_features": 60000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "character": {
+      "analyzer": "char_wb",
+      "ngram_range": [
+        3,
+        5
+      ],
+      "min_df": 2,
+      "max_features": 80000,
+      "sublinear_tf": true,
+      "dtype": "float32"
+    },
+    "svm": {
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 5000
+    }
+  },
+  "encoder": {
+    "model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "e04d38a7d68c60a7a95390045400a555127ab033",
+    "dimension": 384,
+    "max_sequence_length": 128,
+    "batch_size_cuda": 32,
+    "batch_size_cpu": 8,
+    "min_free_ram_gib": 1.5,
+    "min_free_vram_gib": 1.0,
+    "local_files_only": true,
+    "normalize_embeddings": true,
+    "frozen": true
+  },
+  "mlp": {
+    "hidden_layer_sizes": [
+      128,
+      64
+    ],
+    "activation": "relu",
+    "solver": "adam",
+    "alpha": 0.0001,
+    "batch_size": 256,
+    "learning_rate_init": 0.001,
+    "max_iter": 120,
+    "early_stopping": false,
+    "shuffle": true,
+    "tol": 0.0001,
+    "n_iter_no_change": 15
+  },
+  "mlp_sample_weight": "balanced_train_only",
+  "cpu_threads": 2,
+  "parameter_source_sha256": {
+    "config/v21/development_training.json": "30648a7d609f5e597512bb7bff9665d9fc79485f3f9a09df5c178f8c57900520",
+    "config/v21/experiments/multilingual_dl_01.json": "7e4ee1545c6e1d81c386ef6ef4b90dd8349183544d91f32c44d81a929097bc5f"
+  },
+  "hyperparameter_search": false,
+  "validation_tuning": false,
+  "encoder_fitted": false,
+  "calibration": false,
+  "source_text_retained_in_csv": true,
+  "verification_policy": "full inputs and effective bounded inputs; block on proven cross-split content reuse",
+  "near_duplicate_fixed_jaccard_cutoff": 0.8125,
+  "network_allowed": false,
+  "final_test_access_allowed": false,
+  "gemini_allowed": false,
+  "ssl_allowed": false,
+  "pseudo_labels_allowed": false,
+  "production_selection_allowed": false,
+  "publication_approved": false,
+  "protocol_sha256": "0be47f9a18042514e3f916ef49f7e6958e9d48e5efc0f8f7b9905eb1d3340a22",
+  "supervised_fit_allowed_now": false,
+  "gate_status": "BLOCKED",
+  "mask_authorized_rows": 37,
+  "authorized_training_condition": "only after no proven cross-split leakage remains",
+  "runtime_change_allowed": false
+}

@@ -1,0 +1,70 @@
+{
+  "experiment": "exploratory_ssl_pilot_01_token_dedup",
+  "date": "2026-11-21",
+  "authority": "explicit_owner_request_exploratory_ssl_without_ground_truth_promotion",
+  "scope": "local_noncommercial_exploratory_only",
+  "baseline": "group_aware_supervised_pilot_01",
+  "seed": 42,
+  "maximum_preselected_pseudo_groups": 1000,
+  "selection": {
+    "existing_teacher_proposals_only": true,
+    "require_teacher_agreement": true,
+    "language_signal": "en",
+    "reserve_all_299_review_groups_including_50": true,
+    "order": "sha256(seed + ssl_group_id), then id",
+    "probability_or_margin_threshold": null,
+    "backfill_after_leakage_exclusion": false,
+    "one_pseudo_per_final_known_group": true,
+    "validation_labels_errors_metrics_used": false
+  },
+  "leakage": {
+    "character_shingle_size": 5,
+    "jaccard_cutoff": 0.8125,
+    "full_content_views": [
+      "body_normalized",
+      "full_normalized",
+      "body_template",
+      "full_template"
+    ],
+    "close_validation_and_review_related_components_over_entire_existing_pool": true,
+    "maximum_closure_rounds": 8,
+    "maximum_reference_frontier_rows": 5000,
+    "quarantine_ambiguous_similarity_conservatively": true,
+    "protected_v2_reference_fingerprints_only": true,
+    "drop_exact_or_high_risk_duplicate_verified_inputs": true,
+    "block_unfinished_checks": true
+  },
+  "training": {
+    "candidates": [
+      "tfidf_linearsvc",
+      "minilm_mlp"
+    ],
+    "pseudo_reliability_weight": 0.1,
+    "class_weights_from_verified_train_only": true,
+    "freeze_verified_fitted_tfidf_and_scaler": true,
+    "refit_classifier_heads_only_from_same_seed_and_hyperparameters": true,
+    "fit_encoder": false,
+    "cpu_threads": 2,
+    "variants_per_architecture": 1,
+    "validation_tuning": false
+  },
+  "pseudo_label_precision": "UNKNOWN_NOT_INDEPENDENTLY_VALIDATED",
+  "pseudo_is_ground_truth": false,
+  "official_training_admission_or_verified_promotion": false,
+  "human_review_decisions_generated": false,
+  "network_allowed": false,
+  "gemini_allowed": false,
+  "final_test_access_allowed": false,
+  "runtime_change_allowed": false,
+  "publication_approved": false,
+  "correctness_amendment": {
+    "parent_experiment": "exploratory_ssl_pilot_01",
+    "reason": "Complete predeclared verified-input novelty guard for encoder token128 equality",
+    "excluded_train_side_token_collision_rows": 2,
+    "validation_input_collisions": 0,
+    "selection_uses_validation_predictions_or_metrics": false,
+    "thresholds_weights_seed_or_hyperparameters_changed": false,
+    "no_backfill": true,
+    "diagnostic_parent_run_is_retained_not_selected_by_score": true
+  }
+}

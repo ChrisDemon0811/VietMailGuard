@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "experiment_id": "semisupervised_probe_01",
+  "scope": "small_unverified_pseudo_label_train_only_research_comparison",
+  "authority": "owner Training Unblock task: small pseudo-labeling experiment after verified three-class seed and source permission gates",
+  "seed": 42,
+  "folds": 3,
+  "fit_encoder": false,
+  "fit_on_validation": false,
+  "final_test_access_allowed": false,
+  "network_allowed": false,
+  "gemini_allowed": false,
+  "source_supervised_config": "config/v22/training_unblock_expanded.json",
+  "selection": {
+    "language_signal": "en",
+    "predicted_class": "normal",
+    "require_both_v22_teachers_agree": true,
+    "minimum_within_batch_score_rank_percentile": 0.75,
+    "rank_ties": "minimum rank, conservative",
+    "rule_verification": "same rank-based selection within each held Train fold, no Validation tuning",
+    "confidence_threshold": null,
+    "required_oof_independent_groups": 299,
+    "required_oof_precision_one_sided_lower_bound": 0.99,
+    "alpha": 0.05,
+    "source_distribution_shift_still_unverified": true,
+    "maximum_pseudo_rows": 32,
+    "pseudo_sample_weight": 0.1,
+    "pseudo_labels_are_ground_truth": false,
+    "human_verified_rows_added": 0,
+    "verified_dataset_rows_added": 0,
+    "weak_label_general_training_admission": false,
+    "other_language_or_class_cells": "abstain; no reliable supporting cohort"
+  },
+  "comparison": {
+    "supervised_reference": "results/v22_multilingual/experiments/training_unblock_02/results.json",
+    "validation": "same 1326 approved inherited Development Validation rows",
+    "same_hyperparameters": true,
+    "class_weights": "freeze balanced class weights computed from verified Train only",
+    "required_before_large_scale_recommendation": [
+      "SSL Macro F1 not lower than paired supervised baseline",
+      "SSL phishing recall not lower than paired supervised baseline",
+      "normal false positives do not increase",
+      "independent human acceptance audit on target source/class/language/origin meets the registered precision policy"
+    ],
+    "large_scale_admission_ready": false,
+    "production_ready": false
+  },
+  "outputs": {
+    "models": "models/v22_multilingual/experiments/semisupervised_probe_01",
+    "results": "results/v22_multilingual/experiments/semisupervised_probe_01",
+    "private_pseudo_csv": "data/v22/training_unblock/research_pseudo_training.csv"
+  }
+}

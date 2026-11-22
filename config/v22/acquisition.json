@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "purpose": "restricted_local_noncommercial_research",
+  "max_download_bytes": 2147483648,
+  "max_email_bytes": 10485760,
+  "bootstrap_approval": {
+    "authorization": "owner_user_request_phase3_2",
+    "expected_rows": 1733,
+    "scope": "local_development_only",
+    "license": "CC-BY-4.0",
+    "preserve_inherited_splits": true,
+    "publication_approved": false
+  },
+  "sources": [
+    {
+      "source": "nazario_modern",
+      "base_url": "https://monkey.org/~jose/phishing/",
+      "files": ["phishing-2015", "phishing-2016", "phishing-2017", "phishing-2018", "phishing-2019", "phishing-2020", "phishing-2021", "phishing-2022", "phishing-2023", "phishing-2024", "phishing-2025"],
+      "format": "mbox",
+      "license": "CC-BY-4.0",
+      "license_url": "https://monkey.org/~jose/phishing/README.txt",
+      "attribution": "Jose Nazario, Phishing Corpus; original email collection; local parsing/normalization modifications recorded",
+      "collection": "Publisher's own inbox; publisher describes hand classification; not a breached mailbox dump",
+      "raw_label": "publisher_phishing",
+      "candidate_label": "phishing",
+      "label_provenance": "publisher_hand_classified_not_project_human_reviewed"
+    },
+    {
+      "source": "phishing_pot",
+      "revision": "78be141545ed9e56eefb857808ac78e83eb81b81",
+      "base_url": "https://codeload.github.com/rf-peixoto/phishing_pot/tar.gz/",
+      "files": ["78be141545ed9e56eefb857808ac78e83eb81b81"],
+      "format": "tar_eml",
+      "license": "CC-BY-NC-4.0",
+      "license_url": "https://github.com/rf-peixoto/phishing_pot/blob/78be141545ed9e56eefb857808ac78e83eb81b81/LICENSE",
+      "attribution": "Phishing Pot, rf-peixoto; https://github.com/rf-peixoto/phishing_pot ; https://www.linkedin.com/in/rf-peixoto ; noncommercial research only",
+      "collection": "Author-controlled/honeypot inbox messages, anonymization requested; not a downloaded breach or access to third-party inboxes",
+      "raw_label": "mixed_repository_threat_email",
+      "candidate_label": "spam_or_scam_or_phishing_candidate",
+      "label_provenance": "repository_collection_not_verified_three_class_labels"
+    }
+  ]
+}

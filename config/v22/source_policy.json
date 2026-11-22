@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "activation": "none; Phase 1/2 cannot activate source-level label rules",
+  "sources": {
+    "trec06c": {"taxonomy": "ham/spam, not verified three-class", "rights": "NOT VERIFIED; NIST distribution withdrawn for PII", "evidence": "https://trec.nist.gov/data/spam.html", "approval": "pending language-competent human review and rights decision"},
+    "enron_original": {"taxonomy": "unlabeled; corporate origin is not a normal label", "rights": "research resource with privacy warnings; redistribution NOT VERIFIED", "evidence": "https://www.cs.cmu.edu/~enron/", "approval": "pending reviewed subsets"},
+    "merged_dataset": {"taxonomy": "0 normal candidate, 1 spam/scam/phishing mixed candidate", "rights": "NOT VERIFIED per upstream component", "evidence": "reports/v21/source_approval_matrix.md", "approval": "pending component lineage and reviewed labels"},
+    "balanced_dataset": {"taxonomy": "derived from Merged, not independent", "rights": "NOT VERIFIED per upstream component", "evidence": "reports/v21/csv_merged_balanced_overlap.json", "approval": "no independent sample quota; resolve conflicts with Merged"},
+    "meajor": {"taxonomy": "binary; positive is not automatically phishing", "rights": "NOT VERIFIED per component", "evidence": "reports/v21/source_approval_matrix.md", "approval": "pending version and component review"},
+    "v2_bootstrap": {"taxonomy": "verified inherited three-class development labels", "rights": "distribution NOT VERIFIED per upstream component", "evidence": "reports/v21/bootstrap_development_report.md", "approval": "existing development-only evidence; not a new V2.2 approval or final benchmark"},
+    "synthetic_zh": {"taxonomy": "synthetic source labels, not human verified", "rights": "Apache-2.0 declared by source; underlying brand/content rights not independently established", "evidence": "reports/v21/research_synthetic_zh_audit.md", "approval": "research-only; excluded from real-data quota and final benchmark"},
+    "phishvn": {"taxonomy": "URL data, not email classification examples", "rights": "see prior URL audit; no new redistribution authorization", "evidence": "reports/v21/phishvn_url_pipeline_report.md", "approval": "excluded from email quota"}
+  }
+}

@@ -8,6 +8,7 @@ Usage:
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -44,6 +45,13 @@ def display_port(arguments: list[str]) -> str:
 def main() -> int:
     """Validate the local setup and run VietMailGuard Mail."""
 
+    # Windows pipes/files can default to CP1252 even when the terminal uses
+    # Unicode. Configure both this launcher and its Python child explicitly.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
     if not APP_PATH.is_file():
         print(f"Không tìm thấy Streamlit app: {APP_PATH}", file=sys.stderr)
         return 1
@@ -62,6 +70,7 @@ def main() -> int:
             build_command(extra_arguments),
             cwd=PROJECT_ROOT,
             check=False,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
         )
     except KeyboardInterrupt:
         return 0

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "target_rows": 300000,
+  "target_labels": {"normal": 150000, "spam": 75000, "phishing": 75000},
+  "target_languages": {"en": 150000, "vi": 90000, "zh": 60000},
+  "near_prefix_characters": 512,
+  "near_sketch_size": 64,
+  "near_hamming_distance": 3,
+  "near_sketch_jaccard": 0.8,
+  "near_bucket_limit": 100,
+  "automatic_label_approval": false,
+  "training_allowed": false,
+  "final_test_access_allowed": false
+}

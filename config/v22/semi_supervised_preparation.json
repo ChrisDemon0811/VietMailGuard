@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "scope": "phase3_3_preparation_only",
+  "seed": 42,
+  "target_rows": 300000,
+  "training_allowed": false,
+  "pseudo_label_generation_allowed": false,
+  "source_approval_activation_allowed": false,
+  "final_test_access_allowed": false,
+  "gemini_allowed": false,
+  "inherit_train_validation_assignments": true,
+  "teachers": [
+    {"id": "tfidf_linear_svc", "configuration": "config/v21/runtime_model.json", "score_kind": "uncalibrated_margin", "probability_threshold": null},
+    {"id": "minilm_mlp", "configuration": "config/v21/runtime_multilingual.json", "score_kind": "uncalibrated_softmax", "probability_threshold": null}
+  ],
+  "pseudo_label_policy": {
+    "ground_truth": false,
+    "partition": "train_only",
+    "training_eligible_now": false,
+    "threshold_selection": "future nested group-aware train-only verification; never old Validation or Test",
+    "selection_cells": ["source", "suggested_label", "language", "data_origin"],
+    "empirical_precision_lower_bound_proposal": 0.99,
+    "one_sided_alpha": 0.05,
+    "minimum_groups_if_zero_errors": 299,
+    "proposal_requires_owner_confirmation": true,
+    "unverified_language_cells": "abstain_and_human_review",
+    "classifier_agreement_is_not_ground_truth": true,
+    "weak_or_pseudo_in_validation_or_test": false,
+    "record_fields": ["id", "source", "source_version", "source_hash", "language", "data_origin", "original_label_status", "raw_label", "candidate_label", "final_group_id", "inherited_split", "teacher_id", "teacher_artifact_sha256", "preprocessing_sha256", "proposed_label", "score_kind", "raw_scores", "calibration_id", "selection_rule_id", "review_status", "iteration", "created_at_utc"]
+  },
+  "experiment_proposal": {
+    "baseline": "supervised_verified_only",
+    "variants": ["one_pass_pseudo_labeling", "bounded_self_training", "human_active_learning"],
+    "future_max_self_training_rounds": 3,
+    "future_pseudo_weight_grid": [0.1, 0.25, 0.5],
+    "future_additional_group_budgets": [0, 5000, 15000, 30000, 60000, 100000, 300000],
+    "budgets_are_caps_not_required_row_counts": true,
+    "comparison": "same verified development Validation, equal group budgets, fixed seeds and preprocessing; no weak or pseudo evaluation labels",
+    "metrics": ["macro_f1", "phishing_recall", "normal_false_positive_rate", "per_class_precision_recall_f1_support", "per_language_origin_support", "confusion_matrix", "latency", "ram", "artifact_size"],
+    "final_evaluation_ready": false
+  },
+  "review": {
+    "existing_ui": "scripts/v22/dataset_review_app.py",
+    "priority_queue": "data/v22/phase33/active_review_priority.csv",
+    "sample_selection_changed": false,
+    "acceptance_policy": "config/v22/expansion.json",
+    "assigned_reviewers": [],
+    "model_uncertainty_scores_computed": false,
+    "priority_is_metadata_triage_not_model_active_learning": true
+  }
+}
