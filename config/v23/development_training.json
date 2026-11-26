@@ -1,0 +1,41 @@
+{
+  "scope": "development_only_not_final_evaluation",
+  "authorization": "owner confirmed Development, not Final Test on 2026-11-24",
+  "seed": 42,
+  "minimum_unique_used_in_learning_and_validation": 300000,
+  "verified_train_rows": 7748,
+  "verified_validation_rows": 1938,
+  "benchmark": "data/v22/group_aware_supervised_pilot_01/cohort",
+  "final_test_ready": false,
+  "pseudo_labels_used": 0,
+  "expansion_role": "train_only_unsupervised_IDF_representation_learning; never classification ground truth",
+  "input_limit_characters_per_field": 4096,
+  "hash_dimensions_per_analyzer": 65536,
+  "word_ngrams": [1, 2],
+  "character_ngrams": [3, 5],
+  "batch_rows": 256,
+  "cpu_threads": 2,
+  "linear_svc": {"C": 1.0, "class_weight": "balanced", "max_iter": 5000},
+  "chi2_k": 60000,
+  "svd_components": 100,
+  "pca_components": 100,
+  "lda_components": 2,
+  "candidate_order": [
+    "supervised_hash_tfidf_svc",
+    "large_scale_idf_svc",
+    "large_scale_idf_chi2_svc",
+    "large_scale_idf_svd_svc",
+    "minilm_mlp_supervised",
+    "minilm_pca_svc_supervised",
+    "minilm_lda_svc_supervised"
+  ],
+  "selection": "Development Validation Macro F1, Phishing Recall and false positives; no repeated Validation tuning",
+  "limitations": [
+    "Only supervised classifier fit rows have Verified labels; IDF corpus rows are not 300000 supervised samples.",
+    "Existing Development Validation is historically exposed, not an independent Final Test.",
+    "Validation Spam has only 33 rows in 13 groups.",
+    "No verified native Vietnamese/Chinese three-class evaluation benchmark.",
+    "Hash collisions are possible; bucket dimensions are not an interpretable learned term vocabulary.",
+    "No expanded hard pseudo-labeling or reuse of the failed 952-pseudo-label weight-0.1 recipe."
+  ]
+}

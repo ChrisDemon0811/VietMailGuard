@@ -119,3 +119,11 @@ reports/v21/*
 /reports/v22/
 /models/v22_multilingual/
 /results/v22_multilingual/
+
+# V2.3 research inputs, derived email content, checkpoints and artifacts stay local.
+/data/v23/
+/models/v23_multilingual/
+/results/v23_multilingual/
+/reports/v23/
+/config/v23/*.local.*
+/config/v23/private/

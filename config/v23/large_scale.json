@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "target_unique_emails": 300000,
+  "scope": "private_noncommercial_research",
+  "min_body_alphanumeric": 8,
+  "max_email_bytes": 10485760,
+  "batch_rows": 500,
+  "sources": {
+    "enron_original": {
+      "parts": "data/v21/processed/enron_original_v1",
+      "rights_evidence": "https://www.cs.cmu.edu/~enron/",
+      "rights_basis": "Publisher research resource; local privacy-preserving research only, no redistribution permission inferred",
+      "label_status": "unlabeled",
+      "candidate_label": "",
+      "evaluation_reference": false
+    },
+    "bruce_guenter_2004": {
+      "archive": "data/v22/training_unblock/raw/bruce_guenter_2004.7z",
+      "rights_evidence": "https://www.untroubled.org/spam/",
+      "rights_basis": "Publisher expressly permits archive use for spam research; preserve attribution and privacy",
+      "label_status": "weak_label",
+      "raw_label": "source_spam",
+      "candidate_label": "spam_or_phishing",
+      "evaluation_reference": false
+    },
+    "bruce_guenter_2005": {
+      "archive": "data/v22/training_unblock/raw/bruce_guenter_2005.7z",
+      "rights_evidence": "https://www.untroubled.org/spam/",
+      "rights_basis": "Publisher expressly permits archive use for spam research; preserve attribution and privacy",
+      "label_status": "weak_label",
+      "raw_label": "source_spam",
+      "candidate_label": "spam_or_phishing",
+      "evaluation_reference": false
+    }
+  },
+  "prohibited": {
+    "legacy_final_test_access": true,
+    "weak_or_pseudo_reference_labels": true,
+    "email_to_external_api": true,
+    "automatic_verified_promotion": true,
+    "production_artifact_overwrite": true
+  },
+  "training_gate": "requires >=300000 valid unique emails, source permissions, group leakage checks, trustworthy reference split and locked protocol"
+}
