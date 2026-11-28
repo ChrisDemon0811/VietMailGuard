@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "scope": "research_preview",
+  "mode": "v23_large_scale",
+  "model_version": "2.3-large-scale-experimental",
+  "candidate": "guarded_weak_recovery",
+  "classes": [
+    "normal",
+    "spam",
+    "phishing"
+  ],
+  "probability_status": "unavailable_uncalibrated",
+  "files": {
+    "artifact": {
+      "path": "models/v23_multilingual/large_scale_optimization_03/final_guarded_weak_recovery.pt",
+      "sha256": "0677f36b35451ada264c3b955c907511fdd096dee66880cd1c91b9c5007396a4"
+    },
+    "metrics": {
+      "path": "results/v23_multilingual/large_scale_optimization_03/metrics.json",
+      "sha256": "0dac518bf30152cc66bbc40b7c7bf127240cdf8b78f3b9636ec96adf90675cbf"
+    },
+    "training_config": {
+      "path": "config/v23/large_scale_optimization_03.json",
+      "sha256": "2cd695e6aad47d32be256add5dbce1548653d99cbe70a670713942c3da1add93"
+    },
+    "frozen_manifest": {
+      "path": "results/v23_multilingual/large_scale_optimization_03/frozen_manifest.json",
+      "sha256": "8bbf5ea1e846a2ebe76faf998c03be6cf04cb8c72b1446579681584cfb2833d0"
+    },
+    "encoder_config": {
+      "path": "config/v21/runtime_multilingual.json",
+      "sha256": "92df793342d1d322f9efcb22d5fc5ca3c8c9cea7402c9519c8a12839f1efbe21"
+    },
+    "protocol": {
+      "path": "results/v23_multilingual/large_scale_optimization_03/protocol.json",
+      "sha256": "1a743dea92f5144f8c6028e632775abe4921de219b89e76de0f543d997137481"
+    }
+  }
+}

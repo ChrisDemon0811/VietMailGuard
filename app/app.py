@@ -34,6 +34,7 @@ from vietmailguard.v21.runtime_inference import model_availability
 from vietmailguard.v21.runtime_modes import V2_MODE, V21_ML_MODE, V21_HYBRID_MODE
 from vietmailguard.v21.runtime_modes import V21_MULTILINGUAL_MODE
 from vietmailguard.v21.multilingual_runtime import multilingual_availability
+from vietmailguard.v23.runtime_inference import V23_ML_MODE, V23_LARGE_MODE, model_availability as v23_availability
 
 st.set_page_config(
     page_title="VietMailGuard Mail",
@@ -150,13 +151,19 @@ with st.sidebar:
     st.page_link(methodology_page, label=t("nav_methodology", language), width="stretch")
     st.markdown('<div class="vmg-sidebar-rule"></div>', unsafe_allow_html=True)
     v21_available, _ = model_availability()
+    v23_available, _ = v23_availability(V23_ML_MODE)
+    v23_large_available, _ = v23_availability(V23_LARGE_MODE)
     modes = [V2_MODE]
+    if v23_available:
+        modes.append(V23_ML_MODE)
+    if v23_large_available:
+        modes.append(V23_LARGE_MODE)
     if v21_available:
         modes.append(V21_ML_MODE)
     multilingual_available, multilingual_reason = multilingual_availability()
     if multilingual_available:
         modes.append(V21_MULTILINGUAL_MODE)
-    if v21_available or multilingual_available:
+    if v21_available or multilingual_available or v23_available or v23_large_available:
         modes.append(V21_HYBRID_MODE)
     selected_mode = st.session_state.get(
         "analysis_mode_selector", st.session_state.get("analysis_mode", V2_MODE)
@@ -170,6 +177,10 @@ with st.sidebar:
         key="analysis_mode_selector",
     )
     st.session_state["analysis_mode"] = st.session_state["analysis_mode_selector"]
+    if not v23_available or not v23_large_available:
+        st.caption(t("v23_unavailable", language))
+    if st.session_state["analysis_mode"] in {V23_ML_MODE, V23_LARGE_MODE}:
+        st.caption(t("v23_research_notice", language))
     if not v21_available:
         st.caption(t("mode_v21_unavailable", language))
     if not multilingual_available:
@@ -181,7 +192,8 @@ with st.sidebar:
                      else "multilingual_invalid_configuration", language))
     if st.session_state["analysis_mode"] == V21_HYBRID_MODE:
         bases = ([V21_ML_MODE] if v21_available else []) + (
-            [V21_MULTILINGUAL_MODE] if multilingual_available else [])
+            [V21_MULTILINGUAL_MODE] if multilingual_available else []) + (
+            [V23_ML_MODE] if v23_available else []) + ([V23_LARGE_MODE] if v23_large_available else [])
         # Widget keys are cleaned up across pages/modes. Keep the actual choice
         # in non-widget state, just as analysis_mode and reviewer_provider are.
         base = st.session_state.get("hybrid_classifier_selector",

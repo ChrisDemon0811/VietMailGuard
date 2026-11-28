@@ -74,6 +74,9 @@ def _selected_engine() -> Any:
         return load_multilingual_engine()
     if mode == "v21_ml":
         return load_v21_engine()
+    if mode in {"v23_ml", "v23_large_scale"}:
+        from vietmailguard.v23.runtime_inference import load_v23_engine
+        return load_v23_engine(mode)
     raise V21ModelUnavailable("Unknown base classifier; no fallback prediction")
 
 
@@ -362,16 +365,17 @@ def render() -> None:
     is_v2 = st.session_state.get("analysis_mode", V2_MODE) == V2_MODE
     render_page_header(
         t("email_analyzer_title", language),
-        t("email_analyzer_intro" if is_v2 else "email_analyzer_v21_intro", language),
+        t("v23_analyzer_intro" if _selected_classifier() in {"v23_ml", "v23_large_scale"} else "email_analyzer_intro" if is_v2 else "email_analyzer_v21_intro", language),
     )
     if st.session_state.get("analysis_mode", V2_MODE) == V2_MODE:
         st.info(t("model_scope_notice", language))
     else:
-        st.info(t("multilingual_experimental_notice" if _selected_classifier() == V21_MULTILINGUAL_MODE
+        st.info(t("v23_research_notice" if _selected_classifier() in {"v23_ml", "v23_large_scale"} else "multilingual_experimental_notice" if _selected_classifier() == V21_MULTILINGUAL_MODE
                   else "v21_development_notice", language))
     with st.container(border=True):
         st.markdown(f"**{t('known_limitations_title', language)}**")
         st.markdown(t("known_limitations_compact" if is_v2 else
+                      "v23_research_notice" if _selected_classifier() in {"v23_ml", "v23_large_scale"} else
                       "multilingual_experimental_notice" if _selected_classifier() == V21_MULTILINGUAL_MODE
                       else "known_limitations_v21", language))
 

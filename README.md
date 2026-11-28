@@ -1,5 +1,25 @@
 # VietMailGuard
 
+## Chạy model V2.3 trong ứng dụng local
+
+Khởi động bằng `.\.venv\Scripts\python.exe run.py`. Nếu Streamlit đang chạy từ
+trước khi cập nhật, dừng server bằng Ctrl+C rồi chạy lại. Trong **Chế độ phân tích**,
+chọn **V2.3 Traditional ML — Research Preview** (TF-IDF + Chi-Square + LinearSVC)
+hoặc **V2.3 Large-scale MiniLM + MLP — Thử nghiệm**. V2 Production vẫn là mặc định;
+chọn phiên bản là thao tác tường minh, không thay đổi lịch sử email đã lưu.
+
+Hai chế độ V2.3 dùng artifact local được kiểm tra SHA-256 qua
+`config/v23/runtime_v23_ml.json` và `config/v23/runtime_v23_large_scale.json`.
+Thiếu artifact/encoder hoặc kiểm tra không đạt thì chế độ không được bật; không
+tải model hay giả lập dự đoán. Để dùng Reviewer, chọn **Hybrid ML + Gemini Reviewer**,
+rồi chọn bộ phân loại V2.3; mock dùng offline, Gemini cần người dùng đồng ý gửi
+nội dung và bấm review riêng.
+
+**So sánh mô hình** và **Dashboard Dữ liệu** hiển thị kết quả V2.3 đã lưu, tách
+Verified/Weak/Unlabeled. Macro F1 Development của Traditional là 0,974976 và MLP
+large-scale tối ưu là 0,944871; đây không phải Final Test. Chưa có benchmark ba lớp
+tiếng Trung hoặc tiếng Việt bản địa độc lập, không hiển thị confidence giả.
+
 ## V2.2 — Bàn giao đồ án nghiên cứu
 
 Để chạy demo và đọc kết quả V2.2 đã chốt, bắt đầu tại

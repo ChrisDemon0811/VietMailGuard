@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "scope": "research_preview",
+  "mode": "v23_ml",
+  "model_version": "2.3-traditional-research",
+  "candidate": "large_scale_idf_chi2_svc",
+  "classes": [
+    "normal",
+    "spam",
+    "phishing"
+  ],
+  "probability_status": "unavailable_uncalibrated",
+  "files": {
+    "artifact": {
+      "path": "models/v23_multilingual/development_01/large_scale_idf_chi2_svc.joblib",
+      "sha256": "afc143b488b63398f603276ec8aaa97ec1ef49cb75b97e6f8c8ea9fe27fcef96"
+    },
+    "metrics": {
+      "path": "results/v23_multilingual/development_01/metrics.json",
+      "sha256": "ee7a8dbd0086545c4e30723160583456024fd958f0632152069c3b25322b4592"
+    },
+    "training_config": {
+      "path": "config/v23/development_training.json",
+      "sha256": "8dfd4ad14369711e0db1b37cde6a8d854f0f6af809625b30f5e325084ade8493"
+    },
+    "frozen_manifest": {
+      "path": "results/v23_multilingual/development_01/frozen_manifest.json",
+      "sha256": "6f27d3faeaa4da171c62a573313599de1c39f84936d861adf743b9e4edaa38da"
+    }
+  }
+}

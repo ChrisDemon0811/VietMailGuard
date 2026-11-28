@@ -14,6 +14,7 @@ from vietmailguard.dashboard_data import ModelDashboardData, load_model_dashboar
 from vietmailguard.inference import model_display_name
 from research_dashboard_ui import render_model_research
 from demo_dashboard_ui import render_model_summary, render_reduction_summary
+from v23_dashboard_ui import render_models
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -346,7 +347,8 @@ def _render_robustness(data: ModelDashboardData, language: str) -> None:
 def render() -> None:
     """Show the demo comparison first; retain scientific details on demand."""
     language = _language()
-    render_model_summary(PROJECT_ROOT, language)
+    if not render_models(PROJECT_ROOT, language):
+        render_model_summary(PROJECT_ROOT, language)
     with st.expander(t("demo_research_details", language)):
         render_reduction_summary(PROJECT_ROOT, language)
         _render_research(language)

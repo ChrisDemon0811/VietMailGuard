@@ -483,6 +483,9 @@ def _render_analysis(
     if result.get("model_scope") == "multilingual_experimental":
         st.text(str(result.get("model_name", "")))
         st.caption(t("multilingual_experimental_notice", language))
+    if result.get("model_scope") == "v23_research_preview":
+        st.text(str(result.get("model_name", "")))
+        st.caption(t("v23_research_notice", language))
     with st.expander(t("analysis_model_risk_details", language)):
         _render_model_risk_details(analysis, result, language)
     with st.expander(t("analysis_model_explanation", language)):
@@ -856,7 +859,8 @@ def render() -> None:
         if selected_mode != V2_MODE:
             is_multilingual = selected_mode == V21_MULTILINGUAL_MODE or (
                 selected_mode == V21_HYBRID_MODE and hybrid_base == V21_MULTILINGUAL_MODE)
-            st.info(t("multilingual_experimental_notice" if is_multilingual else "v21_development_notice", language))
+            base = hybrid_base if selected_mode == V21_HYBRID_MODE else selected_mode
+            st.info(t("v23_research_notice" if base in {"v23_ml", "v23_large_scale"} else "multilingual_experimental_notice" if is_multilingual else "v21_development_notice", language))
 
         counts = service.mailbox_counts()
         title_column, refresh_column = st.columns([8.5, 1.0], vertical_alignment="center")

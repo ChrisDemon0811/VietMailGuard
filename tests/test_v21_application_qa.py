@@ -46,6 +46,10 @@ def test_default_v2_and_invalid_v21_artifact_is_hidden(
     from vietmailguard.v21 import multilingual_runtime
     monkeypatch.setattr(multilingual_runtime, "multilingual_availability",
                         lambda: (False, "multilingual_hash_mismatch"))
+    # This scenario requires every optional artifact to be unavailable. V2.3
+    # has its own independent verification and must also be fault-injected.
+    import vietmailguard.v23.runtime_inference as v23
+    monkeypatch.setattr(v23, "model_availability", lambda *a, **kw: (False, "bad artifact"))
     app = AppTest.from_file(str(APP_PATH), default_timeout=30).run()
     assert not app.exception
     assert app.session_state["analysis_mode"] == "v2"

@@ -7,6 +7,7 @@ import streamlit as st
 from i18n import t
 from research_dashboard_ui import render_dataset_research
 from styles import render_page_header
+from v23_dashboard_ui import render_data
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +23,7 @@ def render() -> None:
     """Present development, audit and research scopes alongside frozen V2 reports."""
     language = str(st.session_state.get("interface_language", "en"))
     render_page_header(t("dataset_dashboard_title", language), t("rd_dataset_intro", language))
+    render_data(PROJECT_ROOT, language)
     research, production = st.tabs([t("rd_research", language), t("rd_v2", language)])
     with research:
         render_dataset_research(PROJECT_ROOT, language)
